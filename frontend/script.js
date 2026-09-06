@@ -1,7 +1,7 @@
 // Polar Energy Command — frontend controller.
 // The browser calls the backend /api/chatbot route; keep the Groq API key server-side.
 
-const API_BASE = window.ENERGY_API_BASE || "http://localhost:8000";
+const API_BASE = "https://zyphers-1.onrender.com/"
 const TANK_CAPACITY_L = 5000;
 const root = document.documentElement;
 
