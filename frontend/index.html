@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#071f3d" />
+  <meta name="description" content="AI-driven smart energy management for polar research stations." />
+  <title>Polar Energy Command | NCPOR</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to main content</a>
+
+  <div class="utility-bar">
+    <div class="utility-left">
+      <span id="util-date">02 Sep 2026</span>
+      <span class="separator">|</span>
+      <span id="util-time">08:56:38 IST</span>
+      <span class="live-indicator"><span class="live-dot"></span> LIVE OPERATIONS FEED</span>
+    </div>
+    <div class="utility-right">
+      <button class="utility-button" id="readAloudBtn" type="button">Screen reader</button>
+      <button class="utility-button" id="fontDown" type="button" aria-label="Decrease text size">A−</button>
+      <button class="utility-button" id="fontUp" type="button" aria-label="Increase text size">A+</button>
+      <label class="language-select">Language <select id="langSelect" aria-label="Language"><option>English</option><option>हिंदी</option></select></label>
+      <span class="secure-label">Secure government workspace</span>
+    </div>
+  </div>
+
+  <header class="masthead">
+    <div class="masthead-inner">
+      <div class="brand-lockup">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 64 64" role="img"><circle cx="32" cy="32" r="28" fill="none" stroke="currentColor" stroke-width="2"/><path d="M32 8l4.7 15.1L52 20l-11.2 11.9L48 44l-16-5.1L16 44l7.2-12.1L12 20l15.3 3.1L32 8Z" fill="currentColor" opacity=".9"/><path d="M17 47c8-4.5 22-4.5 30 0" fill="none" stroke="#e0a83e" stroke-width="2.5" stroke-linecap="round"/></svg>
+        </div>
+        <div>
+          <p class="institution-name">National Centre for Polar and Ocean Research</p>
+          <p class="ministry-name">Ministry of Earth Sciences · Government of India</p>
+        </div>
+      </div>
+      <div class="product-lockup">
+        <span class="product-kicker">POLAR OPERATIONS CONSOLE</span>
+        <h1>AI-Driven Smart Energy Management System</h1>
+        <p>Decision support for resilient research-station energy systems</p>
+      </div>
+      <div class="masthead-status">
+        <span class="status-badge"><span class="status-dot"></span> Nominal</span>
+        <button class="header-icon" type="button" aria-label="Notifications">◌<span class="notification-badge">3</span></button>
+        <button class="header-icon" type="button" aria-label="Settings">⌘</button>
+      </div>
+    </div>
+    <div class="masthead-ribbon" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+  </header>
+
+  <nav class="top-nav" aria-label="Primary navigation">
+    <a class="active" href="#main">Overview</a>
+    <a href="#station-overview">Station network</a>
+    <a href="#forecast">Energy forecast</a>
+    <a href="#mix">Fuel &amp; renewables</a>
+    <a href="#alerts">Alerts</a>
+    <a href="#reports">Reports</a>
+  </nav>
+
+  <main id="main" class="dashboard-shell">
+    <aside class="left-rail" id="station-overview">
+      <div class="rail-heading"><div><span class="eyebrow">Command scope</span><h2>Energy data modules</h2></div><span class="rail-symbol">⌘</span></div>
+
+      <div class="station-card">
+        <label for="stationSelect">Active station</label>
+        <select id="stationSelect">
+          <option>Bharati — Antarctica</option>
+          <option>Maitri — Antarctica</option>
+          <option>Himadri — Arctic</option>
+        </select>
+        <p class="station-sync"><span class="status-dot"></span> Connected · last sync <span id="lastSync">08:54 IST</span></p>
+      </div>
+
+      <div class="module-list">
+        <button class="module-trigger open" type="button" data-target="acc-station">Station status <span>⌃</span></button>
+        <div class="module-body open" id="acc-station"><button class="station active" data-station="Bharati — Antarctica">Bharati · Larsemann Hills <span>●</span></button><button class="station" data-station="Maitri — Antarctica">Maitri · Schirmacher Oasis</button><button class="station" data-station="Himadri — Arctic">Himadri · Ny-Ålesund</button></div>
+        <button class="module-trigger" type="button" data-target="acc-load">Load forecasting <span>›</span></button>
+        <div class="module-body" id="acc-load"><p>24–72h demand forecast from the ML model, by zone.</p></div>
+        <button class="module-trigger" type="button" data-target="acc-renew">Renewable generation <span>›</span></button>
+        <div class="module-body" id="acc-renew"><p>Live solar and wind output plus generation history.</p></div>
+        <button class="module-trigger" type="button" data-target="acc-batt">Battery &amp; fuel reserve <span>›</span></button>
+        <div class="module-body" id="acc-batt"><p>State of charge, diesel tank level, days of autonomy.</p></div>
+        <button class="module-trigger" type="button" data-target="acc-sim">Scenario simulator <span>›</span></button>
+        <div class="module-body" id="acc-sim"><p>Run stress scenarios against the optimizer.</p></div>
+        <button class="module-trigger" type="button" data-target="acc-hist">Historical data <span>›</span></button>
+        <div class="module-body" id="acc-hist"><p>Full time-series export by station and date range.</p></div>
+      </div>
+
+      <div class="rail-note"><div class="rail-note-title">Data governance note</div><p>Model outputs are indicative prototype values, grounded in physics-informed simulation using cited NCPOR/IMD/NOAA/BharatBench climate data. They do not represent live station telemetry.</p></div>
+      <div class="rail-links"><a href="#reports">⇩ Export station brief</a><a href="#main">? Operator guidance</a></div>
+    </aside>
+
+    <section class="main-column">
+      <div class="page-heading">
+        <div><div class="breadcrumb">Operations <span>›</span> Station overview <span>›</span> <strong id="stationCrumb">Bharati</strong></div><h2>Dashboard <span class="inline-nominal"><span class="status-dot"></span> Nominal</span></h2><p>Monitor demand, renewable contribution, fuel reserve, and optimizer recommendations.</p></div>
+        <div class="heading-actions"><button class="secondary-button" type="button">⇩ Brief</button><button class="primary-button" type="button">✦ Run analysis</button></div>
+      </div>
+
+      <div class="context-strip">
+        <div class="context-item"><span class="context-icon">⌁</span><div><span>Station weather</span><strong id="ctxWeather">— °C</strong><small id="ctxWind">·</small></div></div>
+        <div class="context-item"><span class="context-icon">◌</span><div><span>Weather condition</span><strong id="ctxCondition">—</strong></div></div>
+        <div class="context-item"><span class="context-icon">ϟ</span><div><span>Live demand</span><strong id="ctxDemand">— kW</strong></div></div>
+        <div class="context-item"><span class="context-icon amber">≈</span><div><span>Renewable yield</span><strong id="ctxRenewable">— %</strong></div></div>
+      </div>
+
+      <section class="section-card" id="forecast">
+        <div class="section-heading"><div><span class="eyebrow">Dashboard at a glance</span><h3>Power generation vs. demand</h3></div><a href="#forecast">View forecast details ›</a></div>
+        <div class="filter-bar">
+          <div class="filter-legend"><span><i class="legend-square blue"></i> Actual supply</span><span><i class="legend-square red"></i> Load demand</span><span><i class="legend-square forecast"></i> AI forecast</span></div>
+          <form id="filterForm" class="date-form"><label>From <input type="month" id="fromDate" value="2026-08"></label><label>To <input type="month" id="toDate" value="2026-09"></label><button type="submit" class="small-primary">Apply</button></form>
+        </div>
+        <div class="chart-wrap"><canvas id="genDemandChart" height="230"></canvas></div>
+        <div class="chart-foot"><span id="forecastConfidence">ⓘ Forecast horizon: next window</span><span id="forecastRefresh">Source: physics-informed simulation</span></div>
+      </section>
+
+      <div class="metric-grid">
+        <div class="metric-card blue-accent"><span class="metric-label">Air temperature</span><strong id="mTemp">−18 °C</strong><small>Station mast · simulated</small></div>
+        <div class="metric-card amber-accent"><span class="metric-label">Solar output</span><strong id="mSolar">120 kW</strong><small>PV array · instantaneous</small></div>
+        <div class="metric-card green-accent"><span class="metric-label">Battery reserve</span><strong id="mBattery">82 %</strong><small>Li-ion bank · state of charge</small></div>
+        <div class="metric-card navy-accent"><span class="metric-label">Fuel reserve</span><strong id="mFuel">74 %</strong><small id="mFuelLiters">— L remaining</small></div>
+      </div>
+
+      <div class="two-up" id="mix">
+        <section class="section-card chart-panel"><div class="section-heading"><div><span class="eyebrow">Energy mix</span><h3>Renewable vs. diesel contribution</h3></div></div><p class="chart-description">Recent energy mix over the current window (kW)</p><div class="chart-wrap compact"><canvas id="mixChart" height="210"></canvas></div><div class="chart-foot"><span>Blue: renewable · Saffron: diesel</span><span>Live simulated window</span></div></section>
+        <section class="section-card dispatch-panel"><div class="section-heading"><div><span class="eyebrow">Dispatch share</span><h3>Current energy mix</h3></div></div><div class="dispatch-list"><div><span><i class="dispatch-dot blue"></i> Wind + solar</span><strong id="dispRenewable">— %</strong></div><div><span><i class="dispatch-dot green"></i> Battery discharge</span><strong id="dispBattery">— %</strong></div><div><span><i class="dispatch-dot amber"></i> Diesel gensets</span><strong id="dispDiesel">— %</strong></div><div><span><i class="dispatch-dot grey"></i> Grid reserve</span><strong id="dispGrid">0 %</strong></div></div><div class="dispatch-status" id="dispatchStatus"><span class="status-dot"></span> <span id="dispatchStatusText">Awaiting data…</span></div></section>
+      </div>
+
+      <section class="section-card scenario-panel"><div class="section-heading"><div><span class="eyebrow">Scenario simulator</span><h3>Stress-test the next operating window</h3></div><a href="#scenario">Methodology ›</a></div><div class="scenario-buttons"><button class="sim-btn active" data-scenario="normal" type="button"><strong>Normal day</strong><small>Baseline dispatch</small></button><button class="sim-btn" data-scenario="storm" type="button"><strong>Polar night + storm</strong><small>Low renewable window</small></button><button class="sim-btn" data-scenario="delay" type="button"><strong>Fuel resupply delay</strong><small>Reserve preservation</small></button><button class="sim-btn" data-scenario="critical" type="button"><strong>Critical alert test</strong><small>Contingency drill</small></button></div><div class="recommendation"><div class="recommendation-icon">✦</div><div><strong>AI recommendation <span>·</span></strong><p id="aiRecText">Operating within nominal envelope.</p><small id="recConfidence">Model refreshed —</small></div><button class="secondary-button" type="button">Accept plan ↗</button></div></section>
+
+      <section class="section-card alerts-panel" id="alerts"><div class="section-heading"><div><span class="eyebrow">Operational watch</span><h3>Active alerts &amp; actions</h3></div><a href="#alerts">Open alert register ›</a></div><div id="alertsList" class="alert-list"><div class="alert-row alert-heading"><span>Status</span><span>Event</span><span>Impact</span><span>Recommended action</span><span>Owner</span></div></div></section>
+    </section>
+
+    <aside class="assistant-panel">
+      <div class="assistant-header"><div class="assistant-avatar">✦</div><div><span class="eyebrow">EMS assistant</span><h2>Energy operations copilot</h2></div><span class="assistant-live"><span class="status-dot"></span> Online</span></div>
+      <div class="assistant-context">Connected to station telemetry · Groq-powered backend</div>
+      <div class="chat-messages" id="chatMessages"><div class="chat-welcome"><span>✦</span><div><strong>Ask the station assistant</strong><p>Forecasts, reserve health, dispatch plans, and scenario recommendations.</p></div></div><div class="msg bot">Good morning. I can explain the forecast, reserve margin, or dispatch recommendation.</div></div>
+      <div class="quick-prompts"><span>Suggested prompts</span><button type="button" data-prompt="What is the fuel reserve runway?">Fuel runway <b>›</b></button><button type="button" data-prompt="Explain the load forecast">Explain forecast <b>›</b></button><button type="button" data-prompt="Recommend a dispatch plan">Dispatch plan <b>›</b></button></div>
+      <form class="assistant-input" id="chatForm"><input type="text" id="chatInput" placeholder="Ask the assistant" autocomplete="off" /><button type="submit" aria-label="Send message">➤</button></form>
+      <p class="assistant-disclaimer">ⓘ AI outputs are advisory. Validate against live station telemetry before action.</p>
+    </aside>
+  </main>
+
+  <footer class="footer" id="reports"><span>Polar Energy Command · Internal operations prototype</span><span>Data sources: NCPOR, IMD, NOAA, BharatBench (cited, simulated) <b><span class="status-dot"></span> All systems nominal</b></span></footer>
+  <script src="script.js"></script>
+</body>
+</html>

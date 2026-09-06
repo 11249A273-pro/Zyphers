@@ -1,0 +1,52 @@
+import pandas as pd
+
+# Load the real physics-based dataset
+df = pd.read_excel("Polar_Station_Energy_Dataset.xlsx", sheet_name="Hourly_Data")
+
+# --- Map to our existing schema ---
+out = pd.DataFrame()
+out["timestamp"] = df["Timestamp"]
+out["solar_kw"] = df["Solar_Generation_kW"]
+out["wind_kw"] = df["Wind_Generation_kW"]
+out["demand_kw"] = df["Total_Load_kW"]
+out["battery_percent"] = df["Battery_SOC_pct"]
+out["temperature_c"] = df["Temperature_C"]
+
+# Fuel tank remaining level: assume a 5000L tank, subtract cumulative burn
+TANK_CAPACITY_L = 5000
+cumulative_burn = df["Fuel_Consumption_L"].cumsum()
+out["fuel_liters"] = (TANK_CAPACITY_L - cumulative_burn).clip(lower=0).round(1)
+
+# Weather label derived from cloud cover + wind speed (not in original dataset)
+def derive_weather(row):
+    if row["Wind_Speed_mps"] > 15:
+        return "Storm"
+    elif row["Cloud_Cover_pct"] > 70:
+        return "Snow"
+    elif row["Cloud_Cover_pct"] > 40:
+        return "Cloudy"
+    else:
+        return "Clear"
+
+out["weather"] = df.apply(derive_weather, axis=1)
+
+# Scenario label mapped from System_Status (matches your 4 dashboard buttons)
+def derive_scenario(row):
+    if row["System_Status"] == "Diesel-backup":
+        return "storm"
+    elif row["System_Status"] == "Normal" and row["Solar_Generation_kW"] > df["Solar_Generation_kW"].quantile(0.9):
+        return "peak_solar"
+    elif row["System_Status"] == "Normal":
+        return "normal"
+    else:
+        return "critical"  # Battery-supported with low SOC stands in for critical
+
+out["scenario"] = df.apply(derive_scenario, axis=1)
+
+# Also mark the single lowest-battery Diesel-backup hour explicitly as "critical"
+worst_idx = df[df["System_Status"] == "Diesel-backup"]["Battery_SOC_pct"].idxmin()
+out.loc[worst_idx, "scenario"] = "critical"
+
+out.round(1).to_csv("demo_data.csv", index=False)
+print(f" Converted {len(out)} rows to demo_data.csv")
+print(out["scenario"].value_counts())
