@@ -16,6 +16,58 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
   
   <link rel="stylesheet" href="style.css" />
+
+  <!-- Auth UI inline styles -->
+  <style>
+    .user-badge {
+      display: none; /* shown by JS after login */
+      align-items: center;
+      gap: 7px;
+      background: rgba(56,189,248,0.07);
+      border: 1px solid rgba(56,189,248,0.18);
+      border-radius: 6px;
+      padding: 3px 10px 3px 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      color: #94a3b8;
+      cursor: default;
+    }
+    .user-badge-avatar {
+      width: 22px; height: 22px;
+      background: linear-gradient(135deg, #0ea5e9, #10b981);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px;
+      color: #fff;
+      flex-shrink: 0;
+    }
+    .user-badge-name  { color: #e2e8f0; font-weight: 600; }
+    .user-badge-role  {
+      color: #38bdf8;
+      background: rgba(56,189,248,0.10);
+      border-radius: 3px;
+      padding: 1px 5px;
+      font-size: 0.58rem;
+      letter-spacing: 0.08em;
+    }
+    #logoutBtn {
+      background: rgba(244,63,94,0.08);
+      border: 1px solid rgba(244,63,94,0.22);
+      color: #fda4af;
+      border-radius: 6px;
+      padding: 3px 9px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      cursor: pointer;
+      letter-spacing: 0.06em;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    #logoutBtn:hover {
+      background: rgba(244,63,94,0.18);
+      border-color: rgba(244,63,94,0.45);
+      color: #fb7185;
+    }
+  </style>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to operations console</a>
@@ -65,6 +117,15 @@
       <button class="util-btn" id="readAloudBtn" type="button" title="Operator audio brief">
         <span>🎙️</span> Audio Brief
       </button>
+      <span class="sep">|</span>
+      <!-- Logged-in user badge -->
+      <div class="user-badge" id="userBadge" title="Logged in operator">
+        <div class="user-badge-avatar" aria-hidden="true">👤</div>
+        <span class="user-badge-name" id="userBadgeName">operator</span>
+        <span class="user-badge-role" id="userBadgeRole">OPERATOR</span>
+      </div>
+      <!-- Logout button -->
+      <button id="logoutBtn" type="button" title="Sign out of Zyphers EMS">⏻ LOGOUT</button>
       <span class="security-chip">SECURE MOES ENVIRONMENT</span>
     </div>
   </div>
@@ -94,7 +155,7 @@
         <div class="ministry-title">NATIONAL CENTRE FOR POLAR AND OCEAN RESEARCH (NCPOR)</div>
         <div class="sub-ministry">Ministry of Earth Sciences · Government of India</div>
         <div class="project-title-row">
-          <h1 class="project-title">ZYPHERS <span class="badge-tag">SIH-2026</span></h1>
+          <h1 class="project-title">ZYPHERS</h1>
           <span class="system-subtitle">AI-Driven Smart Microgrid Energy Management System</span>
         </div>
       </div>

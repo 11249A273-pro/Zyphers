@@ -1,7 +1,10 @@
 {
   "outputDirectory": "frontend",
+  "cleanUrls": false,
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/login", "destination": "/login.html" },
+    { "source": "/login.html", "destination": "/login.html" },
+    { "source": "/", "destination": "/index.html" }
   ],
   "headers": [
     {
@@ -14,6 +17,12 @@
     },
     {
       "source": "/index.html",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache" }
+      ]
+    },
+    {
+      "source": "/login.html",
       "headers": [
         { "key": "Cache-Control", "value": "no-cache" }
       ]

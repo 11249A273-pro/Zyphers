@@ -4,6 +4,31 @@
  * NCPOR · Ministry of Earth Sciences · SIH 2026
  */
 
+// ─── Auth Constants ─────────────────────────────────────────────────────────
+const TOKEN_KEY = "zyphers_token";
+const USER_KEY  = "zyphers_user";
+
+// ─── Auth Guard: redirect to login if no token present ──────────────────────
+(function authGuard() {
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (!token) {
+    window.location.replace("login.html");
+  }
+})();
+
+// Helper to get current token
+function getToken() {
+  return localStorage.getItem(TOKEN_KEY) || "";
+}
+
+// Logout: clear auth and go to login page
+function logout() {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(USER_KEY);
+  fetch(`${typeof API_BASE !== 'undefined' ? API_BASE : ''}/api/auth/logout`, { method: "POST" }).catch(() => {});
+  window.location.replace("login.html");
+}
+
 // Auto-detect API host:
 // 1. Explicit override if set in window.ENERGY_API_BASE
 // 2. If running on Vercel (*.vercel.app), always forward to Render backend
@@ -338,12 +363,20 @@ function updateChartTheme(theme) {
 }
 
 // --------------------------------------------------------------------------
-// 7. Backend API Fetchers with Retry
+// 7. Backend API Fetchers with Auth Token + Retry
 // --------------------------------------------------------------------------
 async function apiGet(endpoint, retries = 2) {
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      const resp = await fetch(`${API_BASE}${endpoint}`, { signal: AbortSignal.timeout(12000) });
+      const resp = await fetch(`${API_BASE}${endpoint}`, {
+        headers: { "Authorization": `Bearer ${getToken()}` },
+        signal: AbortSignal.timeout(12000)
+      });
+      // Token expired or invalid → go back to login
+      if (resp.status === 401) {
+        logout();
+        return;
+      }
       if (!resp.ok) throw new Error(`${endpoint} returned status ${resp.status}`);
       return resp.json();
     } catch (err) {
@@ -359,10 +392,14 @@ async function apiGet(endpoint, retries = 2) {
 async function apiPost(endpoint, body = {}) {
   const resp = await fetch(`${API_BASE}${endpoint}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${getToken()}`
+    },
     body: JSON.stringify(body),
     signal: AbortSignal.timeout(15000)
   });
+  if (resp.status === 401) { logout(); return; }
   if (!resp.ok) throw new Error(`${endpoint} returned status ${resp.status}`);
   return resp.json();
 }
@@ -1094,14 +1131,43 @@ async function loadHardwareHistory() {
 // 14. Keep-Alive Ping (prevents Render free-tier sleep)
 // --------------------------------------------------------------------------
 function keepAlive() {
-  fetch(`${API_BASE}/api/ping`).catch(() => {});
+  fetch(`${API_BASE}/api/ping`, {
+    headers: { "Authorization": `Bearer ${getToken()}` }
+  }).catch(() => {});
 }
 setInterval(keepAlive, 4 * 60 * 1000); // Every 4 minutes
 
 // --------------------------------------------------------------------------
-// 15. Startup Sequence
+// 15. Show logged-in user info in utility bar
+// --------------------------------------------------------------------------
+function renderUserBadge() {
+  try {
+    const raw = localStorage.getItem(USER_KEY);
+    if (!raw) return;
+    const user = JSON.parse(raw);
+    const badge = document.getElementById("userBadge");
+    const nameEl = document.getElementById("userBadgeName");
+    const roleEl = document.getElementById("userBadgeRole");
+    if (badge)  badge.style.display  = "flex";
+    if (nameEl) nameEl.textContent   = user.username || "operator";
+    if (roleEl) roleEl.textContent   = (user.role || "operator").toUpperCase();
+  } catch (e) { /* ignore */ }
+}
+
+// --------------------------------------------------------------------------
+// 16. Startup Sequence
 // --------------------------------------------------------------------------
 document.addEventListener("DOMContentLoaded", () => {
+  renderUserBadge();
+
+  // Wire logout button
+  const logoutBtn = document.getElementById("logoutBtn");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", () => {
+      if (confirm("Sign out of Zyphers Polar EMS?")) logout();
+    });
+  }
+
   // Small delay to ensure DOM is fully painted before Chart.js init
   setTimeout(() => {
     initCharts();

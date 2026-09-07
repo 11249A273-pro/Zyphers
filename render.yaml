@@ -16,3 +16,5 @@ services:
         sync: false          # Set this in Render dashboard (use Render PostgreSQL or Supabase)
       - key: HARDWARE_API_KEY
         value: "zyphers-esp32-secret-2026"
+      - key: SECRET_KEY
+        sync: false          # Set a strong random string in Render dashboard

@@ -2,7 +2,7 @@ import os
 import time
 from datetime import datetime
 from typing import List, Optional
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -13,7 +13,8 @@ from optimizer import optimize_energy, BATTERY_CAPACITY_KWH
 from priority import prioritize_loads
 from alerts import check_alerts
 from chatbot import chatbox_response
-from database import SessionLocal, SensorReading, init_db
+from database import SessionLocal, SensorReading, User, init_db
+from auth import hash_password, verify_password, create_access_token, decode_access_token
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FRONTEND_DIR = os.path.join(BASE_DIR, "..", "frontend")
@@ -53,6 +54,31 @@ app.add_middleware(
 # Initialise DB schema on startup
 init_db()
 
+# ------------------------------------------------------------------
+# Seed default admin account (runs once if users table is empty)
+# ------------------------------------------------------------------
+def seed_admin():
+    """Create the default admin user if no users exist yet."""
+    try:
+        db = SessionLocal()
+        count = db.query(User).count()
+        if count == 0:
+            admin = User(
+                username="admin",
+                email="admin@zyphers.ncpor.gov.in",
+                hashed_password=hash_password("zyphers2026"),
+                role="admin",
+                is_active=True
+            )
+            db.add(admin)
+            db.commit()
+            print("[AUTH] Default admin user seeded: admin / zyphers2026")
+        db.close()
+    except Exception as e:
+        print(f"[AUTH] Seed failed: {e}")
+
+seed_admin()
+
 # --------------------------------------------------------------------------
 # Global State
 # --------------------------------------------------------------------------
@@ -84,6 +110,20 @@ def safe(fn, default):
 # --------------------------------------------------------------------------
 # Pydantic Models
 # --------------------------------------------------------------------------
+# --------------------------------------------------------------------------
+# Auth Pydantic Models
+# --------------------------------------------------------------------------
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+class RegisterRequest(BaseModel):
+    username: str
+    password: str
+    email: Optional[str] = None
+    role: Optional[str] = "operator"  # "admin" | "operator"
+    admin_token: Optional[str] = None  # Required to register new accounts
+
 class ChatRequest(BaseModel):
     message: str
     history: Optional[List[dict]] = []   # [{role: "user"/"assistant", content: str}]
@@ -99,6 +139,117 @@ class HardwareIngestRequest(BaseModel):
     scenario: str = "normal"
     device_id: str = "esp32-unknown"
     api_key: str = ""
+
+# --------------------------------------------------------------------------
+# Auth Helper — get current user from Authorization header
+# --------------------------------------------------------------------------
+def get_current_user(authorization: Optional[str] = Header(None)):
+    """Extract and validate JWT from the Authorization: Bearer <token> header."""
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
+    token = authorization[len("Bearer "):]
+    payload = decode_access_token(token)
+    if not payload:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+    return payload
+
+# --------------------------------------------------------------------------
+# Auth Endpoints
+# --------------------------------------------------------------------------
+@app.post("/api/auth/login")
+def login(req: LoginRequest):
+    """Validate credentials and return a signed JWT access token."""
+    db = SessionLocal()
+    try:
+        user = db.query(User).filter(User.username == req.username).first()
+        if not user or not verify_password(req.password, user.hashed_password):
+            raise HTTPException(status_code=401, detail="Invalid username or password")
+        if not user.is_active:
+            raise HTTPException(status_code=403, detail="Account is disabled")
+
+        # Update last login timestamp
+        user.last_login = datetime.utcnow()
+        db.commit()
+
+        token = create_access_token({
+            "sub": user.username,
+            "role": user.role,
+            "user_id": user.id
+        })
+        return {
+            "access_token": token,
+            "token_type": "bearer",
+            "username": user.username,
+            "role": user.role,
+            "email": user.email
+        }
+    finally:
+        db.close()
+
+@app.post("/api/auth/register")
+def register(req: RegisterRequest):
+    """
+    Create a new user account.
+    Requires a valid admin JWT as admin_token to prevent public signups.
+    """
+    # Validate that the requester is an admin
+    if not req.admin_token:
+        raise HTTPException(status_code=403, detail="Admin token required to register new users")
+    payload = decode_access_token(req.admin_token)
+    if not payload or payload.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Only admins can create new accounts")
+
+    db = SessionLocal()
+    try:
+        existing = db.query(User).filter(User.username == req.username).first()
+        if existing:
+            raise HTTPException(status_code=409, detail="Username already taken")
+
+        role = req.role if req.role in ("admin", "operator") else "operator"
+        new_user = User(
+            username=req.username,
+            email=req.email,
+            hashed_password=hash_password(req.password),
+            role=role,
+            is_active=True
+        )
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+        return {
+            "status": "created",
+            "username": new_user.username,
+            "role": new_user.role,
+            "user_id": new_user.id
+        }
+    finally:
+        db.close()
+
+@app.get("/api/auth/me")
+def get_me(current_user: dict = Depends(get_current_user)):
+    """Return the authenticated user's profile from the JWT payload."""
+    db = SessionLocal()
+    try:
+        user = db.query(User).filter(User.username == current_user["sub"]).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        return {
+            "username": user.username,
+            "email": user.email,
+            "role": user.role,
+            "last_login": user.last_login.isoformat() if user.last_login else None,
+            "created_at": user.created_at.isoformat() if user.created_at else None
+        }
+    finally:
+        db.close()
+
+@app.post("/api/auth/logout")
+def logout():
+    """
+    Logout is handled client-side by removing the token from localStorage.
+    This endpoint exists for completeness and future server-side token blacklisting.
+    """
+    return {"status": "logged_out", "message": "Token removed client-side"}
 
 # --------------------------------------------------------------------------
 # Health & System Endpoints
