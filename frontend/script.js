@@ -1,7 +1,7 @@
 // Polar Energy Command — frontend controller.
 // The browser calls the backend /api/chatbot route; keep the Groq API key server-side.
 
-const API_BASE = "https://zyphers.onrender.com"
+const API_BASE = "https://zyphers.onrender.com";
 const TANK_CAPACITY_L = 5000;
 const root = document.documentElement;
 
@@ -107,7 +107,6 @@ function updateMetricsFromStatus(status) {
   byId("mFuelLiters").textContent = `${safeText(status.fuel)} L remaining`;
 }
 
-// NEW — fills in previously static context-strip numbers with real data
 function updateContextStrip(status) {
   byId("ctxWeather").textContent = `${safeText(status.temperature)} °C`;
   byId("ctxWind").textContent = "Simulated ambient reading";
@@ -118,7 +117,6 @@ function updateContextStrip(status) {
   byId("ctxRenewable").textContent = `${renewablePct} %`;
 }
 
-// NEW — fills in previously static dispatch-share percentages using real optimizer output
 function updateDispatchShare(optimize) {
   const total = (optimize.use_solar || 0) + (optimize.use_wind || 0) +
                 (optimize.use_battery || 0) + (optimize.use_diesel || 0);
@@ -131,14 +129,13 @@ function updateDispatchShare(optimize) {
   byId("dispRenewable").textContent = `${renewablePct} %`;
   byId("dispBattery").textContent = `${batteryPct} %`;
   byId("dispDiesel").textContent = `${dieselPct} %`;
-  byId("dispGrid").textContent = `0 %`; // no grid-reserve concept in current backend — kept honestly at 0
+  byId("dispGrid").textContent = `0 %`;
 
   byId("dispatchStatusText").textContent = optimize.status === "Critical"
     ? "Critical — diesel-only mode active"
     : dieselPct > 0 ? "Diesel backup currently active" : "Renewable contribution meeting demand";
 }
 
-// NEW — fills in previously static confidence/refresh text using real forecast data
 function updateForecastMeta(prediction) {
   const now = new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: false });
   byId("forecastConfidence").textContent = `ⓘ Forecast: demand ≈ ${safeText(prediction.predicted_demand)} kW next window`;
@@ -241,23 +238,36 @@ function renderAlerts(alerts) {
   container.innerHTML = `<div class="alert-row alert-heading"><span>Status</span><span>Event</span><span>Impact</span><span>Recommended action</span><span>Owner</span></div>${rows}`;
 }
 
+// ---------- Hardened refresh: one failing call can no longer break the whole dashboard ----------
 async function refreshData() {
-  try {
-    const [status, prediction, optimize, alerts, history] = await Promise.all([fetchStatus(), fetchPrediction(), fetchOptimize(), fetchAlerts(), fetchHistory()]);
-    updateMetricsFromStatus(status);
-    updateContextStrip(status);
-    updateDispatchShare(optimize);
-    updateForecastMeta(prediction);
-    updateCharts(history);
-    renderAlerts(alerts);
-    byId("aiRecText").textContent = safeText(optimize.action || optimize.recommendation, "Operating within the nominal envelope.");
-    document.querySelector(".assistant-live").innerHTML = '<span class="status-dot"></span> Online';
-  } catch (error) {
-    console.warn("Energy backend unavailable:", error);
-    updateCharts(fallbackHistory);
-    byId("aiRecText").textContent = "Showing demonstration values. Start the FastAPI service to load live station telemetry and optimizer recommendations.";
-    document.querySelector(".assistant-live").innerHTML = '<span class="status-dot" style="background:#d39a22"></span> Standby';
-  }
+  const results = await Promise.allSettled([fetchStatus(), fetchPrediction(), fetchOptimize(), fetchAlerts(), fetchHistory()]);
+  const [statusR, predR, optR, alertsR, historyR] = results;
+
+  results.forEach((r, i) => {
+    if (r.status === "rejected") {
+      const names = ["status", "prediction", "optimize", "alerts", "history"];
+      console.warn(`Endpoint failed: ${names[i]}`, r.reason);
+    }
+  });
+
+  const status = statusR.status === "fulfilled" ? statusR.value : { solar: 0, wind: 0, demand: 0, battery: 0, fuel: 0, temperature: 0, weather: "—" };
+  const prediction = predR.status === "fulfilled" ? predR.value : { predicted_demand: 0, predicted_solar: 0, predicted_wind: 0 };
+  const optimize = optR.status === "fulfilled" ? optR.value : { use_solar: 0, use_wind: 0, use_battery: 0, use_diesel: 0, status: "Normal", action: "Recalculating…" };
+  const alerts = alertsR.status === "fulfilled" ? alertsR.value : [];
+  const history = historyR.status === "fulfilled" && Array.isArray(historyR.value) && historyR.value.length ? historyR.value : fallbackHistory;
+
+  updateMetricsFromStatus(status);
+  updateContextStrip(status);
+  updateDispatchShare(optimize);
+  updateForecastMeta(prediction);
+  updateCharts(history);
+  renderAlerts(alerts);
+  byId("aiRecText").textContent = safeText(optimize.action || optimize.recommendation, "Operating within the nominal envelope.");
+
+  const allFailed = results.every((r) => r.status === "rejected");
+  document.querySelector(".assistant-live").innerHTML = allFailed
+    ? '<span class="status-dot" style="background:#d39a22"></span> Standby'
+    : '<span class="status-dot"></span> Online';
 }
 
 let currentScenario = "normal";
