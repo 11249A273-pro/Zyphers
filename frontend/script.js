@@ -4,8 +4,18 @@
  * NCPOR · Ministry of Earth Sciences · SIH 2026
  */
 
-// Auto-detect API host: defaults to current window origin when served unified, or fallback
-const API_BASE = window.ENERGY_API_BASE || (window.location.origin.includes("http") ? window.location.origin : "http://localhost:8000");
+// Auto-detect API host:
+// 1. Explicit override if set in window.ENERGY_API_BASE
+// 2. If running on Vercel (*.vercel.app), always forward to Render backend
+// 3. On Render or localhost, use same origin
+const RENDER_BACKEND = "https://zyphers.onrender.com";
+const isVercel = window.location.hostname.includes("vercel.app");
+const isLocalhost = ["localhost", "127.0.0.1"].includes(window.location.hostname);
+
+const API_BASE = window.ENERGY_API_BASE ||
+  (isVercel ? RENDER_BACKEND :
+  (isLocalhost ? `http://${window.location.hostname}:8000` :
+  window.location.origin));
 
 // Station Coordinates Database
 const STATIONS = {
@@ -20,6 +30,11 @@ let isSimulationPlaying = true;
 let simInterval = null;
 let currentRecordIndex = 0;
 let totalRecords = 26280;
+
+// Multi-turn conversation history (last 12 turns)
+let chatHistory = [];
+// Hardware connection state
+let isHardwareLive = false;
 
 function byId(id) {
   return document.getElementById(id);
@@ -323,19 +338,30 @@ function updateChartTheme(theme) {
 }
 
 // --------------------------------------------------------------------------
-// 7. Backend API Fetchers
+// 7. Backend API Fetchers with Retry
 // --------------------------------------------------------------------------
-async function apiGet(endpoint) {
-  const resp = await fetch(`${API_BASE}${endpoint}`);
-  if (!resp.ok) throw new Error(`${endpoint} returned status ${resp.status}`);
-  return resp.json();
+async function apiGet(endpoint, retries = 2) {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const resp = await fetch(`${API_BASE}${endpoint}`, { signal: AbortSignal.timeout(12000) });
+      if (!resp.ok) throw new Error(`${endpoint} returned status ${resp.status}`);
+      return resp.json();
+    } catch (err) {
+      if (attempt < retries) {
+        await new Promise(r => setTimeout(r, 800 * (attempt + 1)));
+      } else {
+        throw err;
+      }
+    }
+  }
 }
 
 async function apiPost(endpoint, body = {}) {
   const resp = await fetch(`${API_BASE}${endpoint}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body)
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(15000)
   });
   if (!resp.ok) throw new Error(`${endpoint} returned status ${resp.status}`);
   return resp.json();
@@ -344,16 +370,35 @@ async function apiPost(endpoint, body = {}) {
 // --------------------------------------------------------------------------
 // 8. Main Telemetry & Dashboard Refresh
 // --------------------------------------------------------------------------
+let consecutiveFailures = 0;
+let lastSuccessfulRefresh = Date.now();
+
 async function refreshData() {
   try {
-    const [status, prediction, optimize, priority, alerts, history] = await Promise.all([
+    const [status, prediction, optimize, priority, alerts, history, hwStatus] = await Promise.all([
       apiGet("/api/status"),
       apiGet("/api/prediction"),
       apiGet("/api/optimize"),
       apiGet("/api/priority"),
       apiGet("/api/alerts"),
-      apiGet("/api/history")
+      apiGet("/api/history"),
+      apiGet("/api/hardware/status").catch(() => ({ connected: false }))
     ]);
+
+    // Mark success
+    consecutiveFailures = 0;
+    lastSuccessfulRefresh = Date.now();
+    const banner = byId("offlineBanner");
+    if (banner) banner.style.display = "none";
+    const staleWarn = byId("staleDataWarning");
+    if (staleWarn) staleWarn.classList.remove("visible");
+
+    // Update copilot status badge to ONLINE
+    const copilotBadge = byId("copilotStatusBadge");
+    if (copilotBadge) {
+      copilotBadge.className = "copilot-badge online";
+      copilotBadge.innerHTML = '<span class="status-dot pulse-green"></span> ONLINE';
+    }
 
     renderStatusHUD(status, optimize);
     renderPrediction(prediction);
@@ -363,10 +408,91 @@ async function refreshData() {
     renderCharts(history);
     updateSynopticFlow(status, optimize);
     updateCopilotContext(status, prediction, optimize);
+    updateHardwareBadge(hwStatus, status);
+    updateHardwareTabStatus(hwStatus);
 
     byId("lastSyncTime").textContent = new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
   } catch (err) {
     console.warn("Telemetry poll error:", err);
+    consecutiveFailures++;
+
+    if (consecutiveFailures >= 2) {
+      const banner = byId("offlineBanner");
+      if (banner) banner.style.display = "flex";
+      const staleWarn = byId("staleDataWarning");
+      if (staleWarn) staleWarn.classList.add("visible");
+      // Set copilot badge to OFFLINE
+      const copilotBadge = byId("copilotStatusBadge");
+      if (copilotBadge) {
+        copilotBadge.className = "copilot-badge";
+        copilotBadge.style.background = "rgba(244,63,94,0.15)";
+        copilotBadge.style.color = "#f43f5e";
+        copilotBadge.style.borderColor = "rgba(244,63,94,0.3)";
+        copilotBadge.innerHTML = '<span style="color:#f43f5e">●</span> OFFLINE';
+      }
+    }
+  }
+}
+
+function updateHardwareBadge(hwStatus, status) {
+  isHardwareLive = hwStatus && hwStatus.connected;
+  const badge = byId("hwConnectionBadge");
+  const sourceTag = byId("dataSourceTag");
+  if (!badge) return;
+
+  if (isHardwareLive) {
+    badge.className = "hw-badge hw-live";
+    badge.innerHTML = `<span class="hw-dot"></span> LIVE HW · ${hwStatus.device_id || "ESP32"}`;
+    if (sourceTag) sourceTag.textContent = "HARDWARE";
+  } else {
+    badge.className = "hw-badge hw-sim";
+    badge.innerHTML = `<span class="hw-dot"></span> SIMULATION`;
+    if (sourceTag) sourceTag.textContent = "SIMULATION";
+  }
+}
+
+function updateHardwareTabStatus(hwStatus) {
+  const live = hwStatus && hwStatus.connected;
+  const tabBadge = byId("hwTabStatusBadge");
+  const liveBadge = byId("hwLiveBadge");
+  const dot = byId("hwDotTab");
+  const deviceId = byId("hwDeviceIdTab");
+  const lastSeen = byId("hwLastSeenTab");
+  const dataSource = byId("hwDataSourceTab");
+
+  if (tabBadge) {
+    if (live) {
+      tabBadge.textContent = "🔴 LIVE HARDWARE";
+      tabBadge.style.background = "rgba(16,185,129,0.15)";
+      tabBadge.style.color = "#10b981";
+      tabBadge.style.borderColor = "rgba(16,185,129,0.3)";
+    } else {
+      tabBadge.textContent = "SIMULATION MODE";
+      tabBadge.style.background = "rgba(56,189,248,0.15)";
+      tabBadge.style.color = "#38bdf8";
+      tabBadge.style.borderColor = "rgba(56,189,248,0.3)";
+    }
+  }
+  if (liveBadge) {
+    liveBadge.className = live ? "hw-badge hw-live" : "hw-badge hw-sim";
+    liveBadge.innerHTML = live
+      ? `<span class="hw-dot"></span> LIVE · ${hwStatus.device_id || "ESP32"}`
+      : `<span class="hw-dot"></span> SIMULATION`;
+  }
+  if (dot) {
+    dot.className = live ? "hw-indicator-dot live" : "hw-indicator-dot sim";
+  }
+  if (deviceId) {
+    deviceId.textContent = live
+      ? `Device: ${hwStatus.device_id || "ESP32"}`
+      : "Device: None connected";
+  }
+  if (lastSeen && hwStatus) {
+    const age = hwStatus.last_seen_secs;
+    lastSeen.textContent = live ? `${age}s ago` : "—";
+  }
+  if (dataSource) {
+    dataSource.textContent = live ? "Live ESP32 sensor readings" : "Simulation dataset (3 years)";
   }
 }
 
@@ -733,16 +859,30 @@ function addBotMessage(markdownText) {
   bubble.className = "chat-bubble bot";
   const time = new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
 
-  // Basic formatting for bold and bullets
+  // Rich markdown rendering
   let html = markdownText
-    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-    .replace(/\*(.*?)\*/g, "<em>$1</em>")
-    .replace(/\n\n/g, "</p><p>")
-    .replace(/\n/g, "<br/>");
+    // Headers
+    .replace(/^### (.*$)/gm, '<strong style="font-size:12px;letter-spacing:0.05em;color:var(--text-secondary);display:block;margin-top:8px;margin-bottom:2px">$1</strong>')
+    .replace(/^## (.*$)/gm, '<strong style="font-size:13px;color:var(--cyan);display:block;margin-top:10px;margin-bottom:4px">$1</strong>')
+    // Bold text
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    // Italic text
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    // Inline code
+    .replace(/`([^`]+)`/g, '<code style="background:rgba(56,189,248,0.1);padding:1px 5px;border-radius:3px;font-family:var(--font-mono);font-size:11px;color:var(--cyan)">$1</code>')
+    // Bullet points (•  and -)
+    .replace(/^[•\-\*] (.*$)/gm, '<li style="margin-bottom:2px;padding-left:4px">$1</li>')
+    // Numbered list  
+    .replace(/^(\d+)\. (.*$)/gm, '<li style="margin-bottom:2px;padding-left:4px"><span style="color:var(--cyan);font-weight:600">$1.</span> $2</li>')
+    // Wrap consecutive <li> in <ul>
+    .replace(/(<li.*<\/li>\n?)+/g, (match) => `<ul style="list-style:none;padding-left:12px;margin:4px 0">${match}</ul>`)
+    // Paragraph breaks
+    .replace(/\n\n/g, '</p><p style="margin-top:6px">')
+    .replace(/\n/g, '<br/>');
 
   bubble.innerHTML = `
     <div class="bubble-header">
-      <span class="sender-name">Zyphers Copilot</span>
+      <span class="sender-name">ZARA</span>
       <span class="timestamp">${time}</span>
     </div>
     <div class="bubble-body"><p>${html}</p></div>
@@ -773,26 +913,46 @@ async function handleCopilotQuery(query) {
 
   addUserMessage(clean);
   copilotInput.value = "";
+  copilotInput.disabled = true;
 
-  // Show typing state
+  // Add to history as user turn
+  chatHistory.push({ role: "user", content: clean });
+  if (chatHistory.length > 12) chatHistory = chatHistory.slice(-12);
+
+  // Show typing state with animated dots
   const typingBubble = document.createElement("div");
   typingBubble.className = "chat-bubble bot";
   typingBubble.id = "typingIndicator";
-  typingBubble.innerHTML = `<div class="bubble-body"><p><em>Analyzing microgrid telemetry…</em></p></div>`;
+  typingBubble.innerHTML = `<div class="bubble-body"><p><em>ZARA analyzing telemetry<span class="typing-dots">...</span></em></p></div>`;
   copilotChat.appendChild(typingBubble);
   copilotChat.scrollTop = copilotChat.scrollHeight;
 
   try {
-    const data = await apiPost("/api/chatbot", { message: clean });
+    // Send message + conversation history for multi-turn context
+    const data = await apiPost("/api/chatbot", {
+      message: clean,
+      history: chatHistory.slice(0, -1)  // exclude current turn (already in message)
+    });
     const indicator = byId("typingIndicator");
     if (indicator) indicator.remove();
 
-    addBotMessage(data.response || "No response received from assistant.");
+    const reply = data.response || "No response received from assistant.";
+    addBotMessage(reply + (data.data_source === "hardware" ? "\n\n*[Data: Live Hardware]*" : ""));
+    
+    // Add bot reply to history
+    chatHistory.push({ role: "assistant", content: reply });
+    if (chatHistory.length > 12) chatHistory = chatHistory.slice(-12);
+    
     playChime("nominal");
   } catch (err) {
     const indicator = byId("typingIndicator");
     if (indicator) indicator.remove();
-    addBotMessage("⚠️ The assistant is temporarily offline. Operational rules and automated load shedding remain active.");
+    addBotMessage("⚠️ ZARA is temporarily offline. Switching to local rule-based mode — try asking about solar, battery, or fuel status.");
+    // Clear history on error to avoid stale context
+    chatHistory = [];
+  } finally {
+    copilotInput.disabled = false;
+    copilotInput.focus();
   }
 }
 
@@ -806,6 +966,19 @@ document.querySelectorAll(".prompt-chip").forEach((chip) => {
     handleCopilotQuery(chip.dataset.prompt);
   });
 });
+
+// Clear chat button
+const clearChatBtn = byId("clearChatBtn");
+if (clearChatBtn) {
+  clearChatBtn.addEventListener("click", () => {
+    chatHistory = [];
+    copilotChat.innerHTML = `
+      <div class="chat-bubble bot">
+        <div class="bubble-header"><span class="sender-name">ZARA</span><span class="timestamp">Just now</span></div>
+        <div class="bubble-body"><p>Conversation cleared. I'm ready for your next query. How can I assist with station operations?</p></div>
+      </div>`;
+  });
+}
 
 // Audio Brief
 const readAloudBtn = byId("readAloudBtn");
@@ -835,10 +1008,104 @@ readAloudBtn.addEventListener("click", () => {
 });
 
 // --------------------------------------------------------------------------
-// 12. Startup Sequence
+// 12. Hardware Test Injector
+// --------------------------------------------------------------------------
+const hwInjectBtn = byId("hwInjectBtn");
+const hwInjectStatus = byId("hwInjectStatus");
+
+if (hwInjectBtn) {
+  hwInjectBtn.addEventListener("click", async () => {
+    hwInjectBtn.disabled = true;
+    hwInjectBtn.textContent = "📡 Sending...";
+    if (hwInjectStatus) hwInjectStatus.textContent = "";
+
+    const payload = {
+      solar_kw: parseFloat(byId("hwSolarInput")?.value || 0),
+      wind_kw: parseFloat(byId("hwWindInput")?.value || 0),
+      demand_kw: parseFloat(byId("hwDemandInput")?.value || 0),
+      battery_percent: parseFloat(byId("hwBatteryInput")?.value || 50),
+      fuel_liters: parseFloat(byId("hwFuelInput")?.value || 50000),
+      temperature_c: parseFloat(byId("hwTempInput")?.value || -15),
+      weather: "Test Injection",
+      scenario: "normal",
+      device_id: "browser-test-node",
+      api_key: ""
+    };
+
+    try {
+      const result = await apiPost("/api/ingest/test", payload);
+      if (hwInjectStatus) {
+        hwInjectStatus.style.color = "var(--emerald)";
+        hwInjectStatus.textContent = `✅ Accepted at ${result.timestamp} | DB saved: ${result.db_saved}`;
+      }
+      hwInjectBtn.textContent = "✅ Injected!";
+      setTimeout(() => {
+        hwInjectBtn.textContent = "📡 Inject Live Hardware Data";
+        hwInjectBtn.disabled = false;
+      }, 2000);
+      // Refresh dashboard to show new hardware data
+      setTimeout(refreshData, 500);
+    } catch (err) {
+      if (hwInjectStatus) {
+        hwInjectStatus.style.color = "var(--coral)";
+        hwInjectStatus.textContent = `❌ Error: ${err.message}`;
+      }
+      hwInjectBtn.textContent = "📡 Inject Live Hardware Data";
+      hwInjectBtn.disabled = false;
+    }
+  });
+}
+
+// --------------------------------------------------------------------------
+// 13. Hardware DB History Loader
+// --------------------------------------------------------------------------
+const refreshHwHistoryBtn = byId("refreshHwHistoryBtn");
+if (refreshHwHistoryBtn) {
+  refreshHwHistoryBtn.addEventListener("click", loadHardwareHistory);
+}
+
+async function loadHardwareHistory() {
+  const tbody = byId("hwHistoryTableBody");
+  if (!tbody) return;
+  tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:12px;color:var(--text-muted)">Loading...</td></tr>`;
+  try {
+    const data = await apiGet("/api/history/hardware");
+    if (!data || !data.length) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:12px;color:var(--text-muted)">No hardware readings in database yet. Use the test injector or connect an ESP32.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = data.slice(-20).reverse().map(r => `
+      <tr>
+        <td>${String(r.timestamp || "").slice(0, 19)}</td>
+        <td>${safeNum(r.solar).toFixed(1)}</td>
+        <td>${safeNum(r.wind).toFixed(1)}</td>
+        <td>${safeNum(r.demand).toFixed(1)}</td>
+        <td>${safeNum(r.battery).toFixed(1)}</td>
+        <td>${safeNum(r.temperature).toFixed(1)}</td>
+        <td style="color:var(--emerald)">${r.device_id || "—"}</td>
+      </tr>
+    `).join("");
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:12px;color:var(--coral)">Failed to load history: ${err.message}</td></tr>`;
+  }
+}
+
+// --------------------------------------------------------------------------
+// 14. Keep-Alive Ping (prevents Render free-tier sleep)
+// --------------------------------------------------------------------------
+function keepAlive() {
+  fetch(`${API_BASE}/api/ping`).catch(() => {});
+}
+setInterval(keepAlive, 4 * 60 * 1000); // Every 4 minutes
+
+// --------------------------------------------------------------------------
+// 15. Startup Sequence
 // --------------------------------------------------------------------------
 document.addEventListener("DOMContentLoaded", () => {
-  initCharts();
-  refreshData();
-  startSimLoop();
+  // Small delay to ensure DOM is fully painted before Chart.js init
+  setTimeout(() => {
+    initCharts();
+    refreshData();
+    startSimLoop();
+  }, 50);
 });

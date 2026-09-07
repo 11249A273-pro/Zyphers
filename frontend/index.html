@@ -20,6 +20,13 @@
 <body>
   <a class="skip-link" href="#main">Skip to operations console</a>
 
+  <!-- Offline Banner (shown when backend is unreachable) -->
+  <div id="offlineBanner" role="alert" aria-live="assertive">
+    <span>⚠️</span>
+    <span>BACKEND OFFLINE — Cannot reach Render server. Check connection or try refreshing.</span>
+    <button onclick="document.getElementById('offlineBanner').style.display='none'" style="margin-left:16px;background:rgba(255,255,255,0.15);border:none;color:white;padding:3px 10px;border-radius:4px;cursor:pointer;">✕</button>
+  </div>
+
   <!-- Top Tricolor & National Operations Banner -->
   <div class="national-band" aria-hidden="true">
     <div class="saffron-stripe"></div>
@@ -87,7 +94,7 @@
         <div class="ministry-title">NATIONAL CENTRE FOR POLAR AND OCEAN RESEARCH (NCPOR)</div>
         <div class="sub-ministry">Ministry of Earth Sciences · Government of India</div>
         <div class="project-title-row">
-          <h1 class="project-title">ZYPHERS <span class="badge-tag">SIH-2026 · PS-26061</span></h1>
+          <h1 class="project-title">ZYPHERS <span class="badge-tag">SIH-2026</span></h1>
           <span class="system-subtitle">AI-Driven Smart Microgrid Energy Management System</span>
         </div>
       </div>
@@ -109,6 +116,10 @@
       <div class="station-sync-bar">
         <span class="sync-indicator pulse-green"></span>
         <span>Telemetry Synchronized · <strong id="lastSyncTime">13:35 IST</strong></span>
+        <span id="hwConnectionBadge" class="hw-badge hw-sim" title="Hardware connection status">
+          <span class="hw-dot"></span> SIMULATION
+        </span>
+        <span id="dataSourceTag" class="data-source-tag">SIMULATION</span>
       </div>
     </div>
 
@@ -152,6 +163,9 @@
     </button>
     <button class="nav-tab" data-tab="tab-alerts">
       <span class="nav-icon">🚨</span> Watch &amp; Alerts <span class="alert-count-pip" id="tabAlertCount">0</span>
+    </button>
+    <button class="nav-tab" data-tab="tab-hardware">
+      <span class="nav-icon">🔌</span> Hardware Link
     </button>
   </nav>
 
@@ -788,6 +802,161 @@
         </section>
       </div>
 
+      <!-- Tab Content 5: Operational Watch & Alerts -->
+      <div class="tab-pane" id="tab-alerts">
+        <section class="panel-card">
+          <div class="panel-header">
+            <div>
+              <span class="kicker">EMS EVENT LOG</span>
+              <h2 class="panel-title">Active Station Operational Alerts</h2>
+            </div>
+            <div class="alert-filter-group">
+              <button class="filter-pill active" data-filter="all">All (Active)</button>
+              <button class="filter-pill" data-filter="critical">Critical</button>
+              <button class="filter-pill" data-filter="warning">Warnings</button>
+              <button class="filter-pill" data-filter="ok">Nominal</button>
+            </div>
+          </div>
+
+          <div class="alert-table-wrap">
+            <table class="alert-table">
+              <thead>
+                <tr>
+                  <th>SEVERITY</th>
+                  <th>SYSTEM EVENT</th>
+                  <th>TELEMETRY IMPACT</th>
+                  <th>RECOMMENDED OPERATOR ACTION</th>
+                  <th>SUBSYSTEM</th>
+                </tr>
+              </thead>
+              <tbody id="alertsTableBody">
+                <tr>
+                  <td><span class="badge-nominal">● NOMINAL</span></td>
+                  <td><strong>All Microgrid Systems Operating Within Envelope</strong></td>
+                  <td>Normal Parameters</td>
+                  <td>Routine Telemetry Watch</td>
+                  <td>EMS Core</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <!-- Tab Content 6: Hardware Integration -->
+      <div class="tab-pane" id="tab-hardware">
+        <section class="panel-card">
+          <div class="panel-header">
+            <div>
+              <span class="kicker">ESP32 SENSOR BRIDGE</span>
+              <h2 class="panel-title">Hardware Integration &amp; IoT Device Management</h2>
+            </div>
+            <span class="directive-badge" id="hwTabStatusBadge" style="background:rgba(56,189,248,0.15);color:#38bdf8;border:1px solid rgba(56,189,248,0.3)">SIMULATION MODE</span>
+          </div>
+
+          <p class="section-lead">Connect an ESP32 microcontroller with sensors (INA219 current sensor, DHT22 temperature, anemometer) to ingest live hardware readings into the EMS. All hardware data is persisted to the database.</p>
+
+          <!-- Live Connection Status -->
+          <div class="hardware-panel" id="hwLiveStatusPanel">
+            <div class="hardware-panel-header">
+              <span class="hardware-panel-title">🔌 Live Connection Status</span>
+              <span id="hwLiveBadge" class="hw-badge hw-sim"><span class="hw-dot"></span> SIMULATION</span>
+            </div>
+            <div class="hw-status-row">
+              <div class="hw-indicator">
+                <span class="hw-indicator-dot sim" id="hwDotTab"></span>
+                <span id="hwDeviceIdTab">Device: None connected</span>
+              </div>
+              <div class="hw-indicator">
+                <span>Last seen: </span>
+                <strong id="hwLastSeenTab">—</strong>
+              </div>
+              <div class="hw-indicator">
+                <span>Data source: </span>
+                <strong id="hwDataSourceTab">Simulation dataset</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Browser Test Injector -->
+          <div class="hardware-panel">
+            <div class="hardware-panel-header">
+              <span class="hardware-panel-title">🧪 Browser Test Injector</span>
+              <small style="color:var(--text-muted);font-size:11px">Send fake ESP32 data to test the pipeline</small>
+            </div>
+            <div class="hw-test-form" id="hwTestForm">
+              <div class="hw-input-group">
+                <label class="hw-input-label">Solar (kW)</label>
+                <input class="hw-input" id="hwSolarInput" type="number" value="45.5" step="0.1" min="0" max="120">
+              </div>
+              <div class="hw-input-group">
+                <label class="hw-input-label">Wind (kW)</label>
+                <input class="hw-input" id="hwWindInput" type="number" value="78.2" step="0.1" min="0" max="120">
+              </div>
+              <div class="hw-input-group">
+                <label class="hw-input-label">Demand (kW)</label>
+                <input class="hw-input" id="hwDemandInput" type="number" value="95.0" step="0.1" min="0" max="250">
+              </div>
+              <div class="hw-input-group">
+                <label class="hw-input-label">Battery (%)</label>
+                <input class="hw-input" id="hwBatteryInput" type="number" value="72.5" step="0.1" min="0" max="100">
+              </div>
+              <div class="hw-input-group">
+                <label class="hw-input-label">Fuel (L)</label>
+                <input class="hw-input" id="hwFuelInput" type="number" value="48500" step="100" min="0">
+              </div>
+              <div class="hw-input-group">
+                <label class="hw-input-label">Temp (°C)</label>
+                <input class="hw-input" id="hwTempInput" type="number" value="-18.5" step="0.5">
+              </div>
+              <button class="hw-inject-btn" id="hwInjectBtn" type="button">📡 Inject Live Hardware Data</button>
+              <div id="hwInjectStatus" style="grid-column:1/-1;font-size:11px;color:var(--text-muted);font-family:var(--font-mono);"></div>
+            </div>
+          </div>
+
+          <!-- DB Hardware History -->
+          <div class="hardware-panel">
+            <div class="hardware-panel-header">
+              <span class="hardware-panel-title">🗄️ Database Hardware History (last 50 readings)</span>
+              <button class="copilot-clear-btn" id="refreshHwHistoryBtn">↻ Refresh</button>
+            </div>
+            <div style="overflow-x:auto;max-height:300px;overflow-y:auto">
+              <table class="hw-db-history-table">
+                <thead>
+                  <tr>
+                    <th>Timestamp</th>
+                    <th>Solar kW</th>
+                    <th>Wind kW</th>
+                    <th>Demand kW</th>
+                    <th>Batt %</th>
+                    <th>Temp °C</th>
+                    <th>Device ID</th>
+                  </tr>
+                </thead>
+                <tbody id="hwHistoryTableBody">
+                  <tr><td colspan="7" style="text-align:center;padding:12px;color:var(--text-muted)">Click Refresh to load hardware history</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- ESP32 Setup Instructions -->
+          <div class="hardware-panel">
+            <div class="hardware-panel-header">
+              <span class="hardware-panel-title">📋 ESP32 Setup Guide</span>
+            </div>
+            <div style="font-size:12px;color:var(--text-secondary);line-height:1.8">
+              <p><strong style="color:var(--cyan)">Step 1:</strong> Install Arduino IDE + ESP32 board support (espressif/arduino-esp32)</p>
+              <p><strong style="color:var(--cyan)">Step 2:</strong> Install libraries: Adafruit INA219, DHT sensor library, ArduinoJson v6</p>
+              <p><strong style="color:var(--cyan)">Step 3:</strong> Open <code style="background:rgba(56,189,248,0.1);padding:1px 6px;border-radius:3px">hardware/esp32_sensor.ino</code> and fill in WiFi credentials and backend URL</p>
+              <p><strong style="color:var(--cyan)">Step 4:</strong> Set <code style="background:rgba(56,189,248,0.1);padding:1px 6px;border-radius:3px">SERVER_URL = "http://YOUR_SERVER_IP:8000/api/ingest"</code></p>
+              <p><strong style="color:var(--cyan)">Step 5:</strong> Flash to ESP32 and monitor Serial output. LED blinks = connected and sending data.</p>
+              <p style="margin-top:8px;color:var(--text-muted)">The ESP32 will POST sensor readings every 30 seconds. The dashboard automatically switches to LIVE HW mode when connected.</p>
+            </div>
+          </div>
+        </section>
+      </div>
+
     </div>
 
     <!-- Right Column: AI Operations Copilot -->
@@ -799,12 +968,16 @@
             <span class="copilot-avatar">✦</span>
           </div>
           <div class="copilot-title-box">
-            <span class="copilot-kicker">NCPOR AI AGENT</span>
+            <span class="copilot-kicker">NCPOR AI AGENT · ZARA</span>
             <h3 class="copilot-name">Polar Operations Copilot</h3>
           </div>
-          <span class="copilot-badge online" id="copilotStatusBadge">
-            <span class="status-dot pulse-green"></span> ONLINE
-          </span>
+          <div style="display:flex;align-items:center;gap:8px;margin-left:auto">
+            <span class="stale-data-warning" id="staleDataWarning">⚠ STALE DATA</span>
+            <button class="copilot-clear-btn" id="clearChatBtn" title="Clear conversation">✕ Clear</button>
+            <span class="copilot-badge online" id="copilotStatusBadge">
+              <span class="status-dot pulse-green"></span> ONLINE
+            </span>
+          </div>
         </div>
 
         <div class="copilot-context-banner">
@@ -841,6 +1014,18 @@
             </button>
             <button class="prompt-chip" type="button" data-prompt="What happens if a severe blizzard hits right now?">
               🌪️ Blizzard Simulation
+            </button>
+            <button class="prompt-chip" type="button" data-prompt="What is the battery status and how long can it last?">
+              🔋 Battery Status
+            </button>
+            <button class="prompt-chip" type="button" data-prompt="How does our station compare to Princess Elisabeth zero-emission station?">
+              🌍 Global Comparison
+            </button>
+            <button class="prompt-chip" type="button" data-prompt="What is the current CO2 savings and renewable energy fraction?">
+              🌱 CO₂ &amp; Green Impact
+            </button>
+            <button class="prompt-chip" type="button" data-prompt="Give me a full operational briefing of the station right now.">
+              📊 Full Briefing
             </button>
           </div>
         </div>

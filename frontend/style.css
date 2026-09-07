@@ -1455,3 +1455,430 @@ body {
     gap: 12px;
   }
 }
+/* =====================================================================
+   HARDWARE CONNECTION BADGE & DATA SOURCE STYLES
+   ===================================================================== */
+
+.hw-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-family: 'JetBrains Mono', monospace;
+  margin-left: 12px;
+  transition: all 0.4s ease;
+}
+
+.hw-badge.hw-live {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.5);
+  color: #10b981;
+}
+
+.hw-badge.hw-sim {
+  background: rgba(100, 116, 139, 0.15);
+  border: 1px solid rgba(100, 116, 139, 0.3);
+  color: #94a3b8;
+}
+
+.hw-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: none;
+}
+
+.hw-live .hw-dot {
+  animation: hw-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes hw-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.3; transform: scale(0.7); }
+}
+
+.data-source-tag {
+  display: none; /* Hidden by default, revealed by JS */
+}
+
+/* =====================================================================
+   TYPING ANIMATION DOTS
+   ===================================================================== */
+
+.typing-dots {
+  display: inline-block;
+  overflow: hidden;
+  animation: typing-dots 1.2s steps(3, end) infinite;
+  width: 0;
+}
+
+@keyframes typing-dots {
+  0%  { width: 0; }
+  33% { width: 1ch; }
+  66% { width: 2ch; }
+  100%{ width: 3ch; }
+}
+
+/* =====================================================================
+   OFFLINE BANNER
+   ===================================================================== */
+
+#offlineBanner {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  background: linear-gradient(90deg, #7f1d1d, #991b1b);
+  color: white;
+  padding: 10px 24px;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  border-bottom: 2px solid #ef4444;
+}
+
+/* ============================================================
+   CHART FIX — Ensure charts always render with correct dimensions
+   ============================================================ */
+.chart-viewport {
+  position: relative;
+  width: 100%;
+  min-height: 280px;
+  height: 280px;
+  overflow: hidden;
+}
+.chart-viewport canvas {
+  display: block !important;
+  width: 100% !important;
+}
+.chart-viewport-compact {
+  position: relative;
+  width: 100%;
+  min-height: 200px;
+  height: 200px;
+  overflow: hidden;
+}
+.chart-viewport-compact canvas {
+  display: block !important;
+  width: 100% !important;
+}
+
+/* ============================================================
+   HARDWARE INTEGRATION PANEL
+   ============================================================ */
+.hardware-panel {
+  background: var(--bg-card);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  margin-bottom: 16px;
+  backdrop-filter: var(--backdrop-blur);
+}
+
+.hardware-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.hardware-panel-title {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.hw-status-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.hw-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+}
+
+.hw-indicator-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+
+.hw-indicator-dot.live {
+  background: var(--emerald);
+  box-shadow: 0 0 6px var(--emerald-glow);
+  animation: pulse-live 1.5s ease infinite;
+}
+
+.hw-indicator-dot.sim {
+  background: #38bdf8;
+  opacity: 0.6;
+}
+
+@keyframes pulse-live {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(0.85); }
+}
+
+.hw-test-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.hw-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hw-input-label {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.hw-input {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  padding: 5px 8px;
+  font-size: 12px;
+  font-family: var(--font-mono);
+  width: 100%;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.hw-input:focus {
+  border-color: var(--emerald);
+}
+
+.hw-inject-btn {
+  grid-column: 1 / -1;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.1));
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: var(--emerald);
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  transition: all 0.2s;
+  text-transform: uppercase;
+}
+
+.hw-inject-btn:hover {
+  background: rgba(16, 185, 129, 0.25);
+  border-color: var(--emerald);
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.3);
+}
+
+.hw-inject-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.hw-db-history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  margin-top: 14px;
+}
+
+.hw-db-history-table th {
+  color: var(--text-muted);
+  text-align: left;
+  padding: 4px 8px;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.hw-db-history-table td {
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+}
+
+.hw-db-history-table tr:hover td {
+  background: var(--bg-card-hover);
+}
+
+/* ============================================================
+   CHATBOT IMPROVEMENTS
+   ============================================================ */
+.bubble-body p {
+  margin-bottom: 6px;
+}
+
+.bubble-body p:last-child {
+  margin-bottom: 0;
+}
+
+.bubble-body strong {
+  color: var(--cyan);
+}
+
+.bubble-body ul, .bubble-body ol {
+  padding-left: 16px;
+  margin: 4px 0;
+}
+
+.bubble-body li {
+  margin-bottom: 2px;
+}
+
+.bubble-body .data-highlight {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  background: rgba(56, 189, 248, 0.1);
+  padding: 2px 6px;
+  border-radius: 3px;
+  color: var(--cyan);
+}
+
+.copilot-clear-btn {
+  background: none;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  padding: 3px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 11px;
+  transition: all 0.2s;
+}
+
+.copilot-clear-btn:hover {
+  border-color: var(--coral);
+  color: var(--coral);
+}
+
+/* ============================================================
+   RETRY / OFFLINE STATUS
+   ============================================================ */
+.retry-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(249, 115, 22, 0.15);
+  border: 1px solid rgba(249, 115, 22, 0.3);
+  color: var(--amber);
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+.stale-data-warning {
+  font-size: 10px;
+  color: var(--amber);
+  font-family: var(--font-mono);
+  padding: 3px 8px;
+  background: rgba(249, 115, 22, 0.1);
+  border-radius: 4px;
+  display: none;
+}
+
+.stale-data-warning.visible {
+  display: inline-block;
+}
+
+/* ============================================================
+   AI OPTIMIZER TAB — fill the missing content
+   ============================================================ */
+.optimizer-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.optimizer-metric-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  backdrop-filter: var(--backdrop-blur);
+  transition: border-color 0.2s;
+}
+
+.optimizer-metric-card:hover {
+  border-color: var(--border-glow);
+}
+
+.om-label {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 8px;
+}
+
+.om-value {
+  font-size: 28px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.om-unit {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-left: 4px;
+}
+
+.om-trend {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* ============================================================
+   IMPROVED QUICK CHIPS
+   ============================================================ */
+.quick-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.prompt-chip {
+  white-space: nowrap;
+  font-size: 10.5px;
+}
+

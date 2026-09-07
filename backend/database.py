@@ -12,14 +12,15 @@ engine = None
 if DATABASE_URL:
     try:
         engine = create_engine(DATABASE_URL)
+        print(f"[DB] Connected to PostgreSQL database.")
     except Exception as e:
-        print(f"[WARN] Failed to create database engine for {DATABASE_URL}: {e}")
+        print(f"[WARN] Failed to create database engine: {e}")
         engine = None
 
 if engine is None:
-    # Safe SQLite local fallback
     fallback_db_path = os.path.join(BASE_DIR, "polar_fallback.db")
     engine = create_engine(f"sqlite:///{fallback_db_path}")
+    print(f"[DB] Using SQLite fallback at {fallback_db_path}")
 
 SessionLocal = sessionmaker(bind=engine)
 Base = declarative_base()
@@ -36,6 +37,7 @@ class SensorReading(Base):
     temperature_c = Column(Float)
     weather = Column(String)
     scenario = Column(String)
+    device_id = Column(String, default="simulation")  # NEW: identifies hardware source
 
 def init_db():
     Base.metadata.create_all(bind=engine)

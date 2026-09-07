@@ -2,12 +2,17 @@ services:
   - type: web
     name: zyphers-polar-ems
     env: python
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "uvicorn app:app --app-dir backend --host 0.0.0.0 --port $PORT"
+    region: singapore   # Closest to India
     plan: free
+    buildCommand: "pip install -r backend/requirements.txt"
+    startCommand: "uvicorn app:app --app-dir backend --host 0.0.0.0 --port $PORT"
     autoDeploy: true
     envVars:
       - key: PYTHON_VERSION
-        value: 3.11.9
+        value: "3.11.9"
       - key: GROQ_API_KEY
-        sync: false
+        sync: false          # Set this in Render dashboard
+      - key: DATABASE_URL
+        sync: false          # Set this in Render dashboard (use Render PostgreSQL or Supabase)
+      - key: HARDWARE_API_KEY
+        value: "zyphers-esp32-secret-2026"

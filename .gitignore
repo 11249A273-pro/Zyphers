@@ -1,5 +1,37 @@
 venv/
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
 .env
+.env.local
+.env.*.local
 node_modules/
+.DS_Store
+Thumbs.db
+
+# Python cache
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Database files (SQLite fallback — not needed in repo)
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# Vercel
+.vercel/
+
+# Test artifacts
+.pytest_cache/
+htmlcov/
+.coverage
