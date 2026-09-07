@@ -3,10 +3,24 @@ from dotenv import load_dotenv
 from sqlalchemy import create_engine, Column, Integer, Float, String, DateTime
 from sqlalchemy.orm import declarative_base, sessionmaker
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+load_dotenv(os.path.join(BASE_DIR, ".env"))
 load_dotenv()
-DATABASE_URL = os.getenv("DATABASE_URL")
 
-engine = create_engine(DATABASE_URL)
+DATABASE_URL = os.getenv("DATABASE_URL")
+engine = None
+if DATABASE_URL:
+    try:
+        engine = create_engine(DATABASE_URL)
+    except Exception as e:
+        print(f"[WARN] Failed to create database engine for {DATABASE_URL}: {e}")
+        engine = None
+
+if engine is None:
+    # Safe SQLite local fallback
+    fallback_db_path = os.path.join(BASE_DIR, "polar_fallback.db")
+    engine = create_engine(f"sqlite:///{fallback_db_path}")
+
 SessionLocal = sessionmaker(bind=engine)
 Base = declarative_base()
 

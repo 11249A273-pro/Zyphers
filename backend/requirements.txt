@@ -1,7 +1,6 @@
 numpy
 pandas
 scikit-learn
-statsmodels
 fastapi
 uvicorn
 psycopg2-binary

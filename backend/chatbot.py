@@ -3,8 +3,18 @@ from dotenv import load_dotenv
 from groq import Groq
 from rule_based_fallback import fallback_response
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+load_dotenv(os.path.join(BASE_DIR, ".env"))
 load_dotenv()
-client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+
+groq_key = os.getenv("GROQ_API_KEY")
+client = None
+if groq_key:
+    try:
+        client = Groq(api_key=groq_key)
+    except Exception as e:
+        print(f"[WARN] Failed to initialize Groq client: {e}")
+        client = None
 
 SYSTEM_PROMPT = """You are the NCPOR Energy Assistant for an AI-Driven Smart 
 Energy Management System for Indian polar research stations. Answer using 

@@ -1,155 +1,879 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#071f3d" />
-  <meta name="description" content="AI-driven smart energy management for polar research stations." />
-  <title>Polar Energy Command | NCPOR</title>
+  <meta name="theme-color" content="#060c18" />
+  <meta name="description" content="NCPOR Zyphers: AI-Driven Smart Energy Management System for Indian Polar Research Stations (Bharati, Maitri, Himadri)." />
+  <title>Zyphers · Polar Energy Command | NCPOR Government of India</title>
+  
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  
   <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@latest/dist/chart.umd.min.js"></script>
 </head>
 <body>
-  <a class="skip-link" href="#main">Skip to main content</a>
+  <a class="skip-link" href="#main">Skip to operations console</a>
 
+  <!-- Top Tricolor & National Operations Banner -->
+  <div class="national-band" aria-hidden="true">
+    <div class="saffron-stripe"></div>
+    <div class="white-stripe"></div>
+    <div class="green-stripe"></div>
+  </div>
+
+  <!-- Operational Utility Bar -->
   <div class="utility-bar">
     <div class="utility-left">
-      <span id="util-date">02 Sep 2026</span>
-      <span class="separator">|</span>
-      <span id="util-time">08:56:38 IST</span>
-      <span class="live-indicator"><span class="live-dot"></span> LIVE OPERATIONS FEED</span>
+      <div class="clock-group">
+        <span class="clock-badge"><span class="clock-dot"></span> UTC</span>
+        <span id="util-utc-time" class="mono-time">00:00:00 UTC</span>
+        <span class="sep">|</span>
+        <span class="clock-badge ist"><span class="clock-dot"></span> IST</span>
+        <span id="util-ist-time" class="mono-time">05:30:00 IST</span>
+      </div>
+      <span class="sep">|</span>
+      <div class="downlink-status" id="downlinkStatus">
+        <span class="live-dot pulse-green"></span>
+        <span class="downlink-text">SAT-LINK: GSAT-7A (42ms · 99.8% QOS)</span>
+      </div>
     </div>
     <div class="utility-right">
-      <button class="utility-button" id="readAloudBtn" type="button">Screen reader</button>
-      <button class="utility-button" id="fontDown" type="button" aria-label="Decrease text size">A−</button>
-      <button class="utility-button" id="fontUp" type="button" aria-label="Increase text size">A+</button>
-      <label class="language-select">Language <select id="langSelect" aria-label="Language"><option>English</option><option>हिंदी</option></select></label>
-      <span class="secure-label">Secure government workspace</span>
+      <div class="grid-condition-badge" id="gridConditionBadge">
+        <span class="status-pip"></span>
+        <span id="gridConditionText">GRID DEFCON: NORMAL</span>
+      </div>
+      <span class="sep">|</span>
+      <button class="util-btn" id="themeToggle" type="button" title="Toggle Polar Night / Polar Day">
+        <span id="themeIcon">☀️</span> <span id="themeLabel">Polar Day</span>
+      </button>
+      <button class="util-btn" id="soundToggle" type="button" title="Toggle audio alerts">
+        <span id="soundIcon">🔔</span> Sound ON
+      </button>
+      <button class="util-btn" id="readAloudBtn" type="button" title="Operator audio brief">
+        <span>🎙️</span> Audio Brief
+      </button>
+      <span class="security-chip">SECURE MOES ENVIRONMENT</span>
     </div>
   </div>
 
-  <header class="masthead">
-    <div class="masthead-inner">
-      <div class="brand-lockup">
-        <div class="brand-mark" aria-hidden="true">
-          <svg viewBox="0 0 64 64" role="img"><circle cx="32" cy="32" r="28" fill="none" stroke="currentColor" stroke-width="2"/><path d="M32 8l4.7 15.1L52 20l-11.2 11.9L48 44l-16-5.1L16 44l7.2-12.1L12 20l15.3 3.1L32 8Z" fill="currentColor" opacity=".9"/><path d="M17 47c8-4.5 22-4.5 30 0" fill="none" stroke="#e0a83e" stroke-width="2.5" stroke-linecap="round"/></svg>
-        </div>
-        <div>
-          <p class="institution-name">National Centre for Polar and Ocean Research</p>
-          <p class="ministry-name">Ministry of Earth Sciences · Government of India</p>
-        </div>
+  <!-- Command Masthead -->
+  <header class="command-masthead">
+    <div class="masthead-left">
+      <div class="emblem-container" title="National Centre for Polar and Ocean Research">
+        <!-- SVG Emblem -->
+        <svg viewBox="0 0 72 72" class="national-emblem" aria-hidden="true">
+          <circle cx="36" cy="36" r="32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-dasharray="3 3" opacity="0.4"/>
+          <circle cx="36" cy="36" r="28" fill="rgba(14, 165, 233, 0.08)" stroke="#38bdf8" stroke-width="1.5"/>
+          <!-- Polar Compass / Aurora Star -->
+          <polygon points="36,12 42,30 60,36 42,42 36,60 30,42 12,36 30,30" fill="url(#auroraGrad)" />
+          <circle cx="36" cy="36" r="4.5" fill="#f8fafc"/>
+          <circle cx="36" cy="36" r="9" fill="none" stroke="#f59e0b" stroke-width="1.2"/>
+          <defs>
+            <linearGradient id="auroraGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#38bdf8" />
+              <stop offset="50%" stop-color="#10b981" />
+              <stop offset="100%" stop-color="#0284c7" />
+            </linearGradient>
+          </defs>
+        </svg>
       </div>
-      <div class="product-lockup">
-        <span class="product-kicker">POLAR OPERATIONS CONSOLE</span>
-        <h1>AI-Driven Smart Energy Management System</h1>
-        <p>Decision support for resilient research-station energy systems</p>
-      </div>
-      <div class="masthead-status">
-        <span class="status-badge"><span class="status-dot"></span> Nominal</span>
-        <button class="header-icon" type="button" aria-label="Notifications">◌<span class="notification-badge">3</span></button>
-        <button class="header-icon" type="button" aria-label="Settings">⌘</button>
+      <div class="agency-titles">
+        <div class="ministry-title">NATIONAL CENTRE FOR POLAR AND OCEAN RESEARCH (NCPOR)</div>
+        <div class="sub-ministry">Ministry of Earth Sciences · Government of India</div>
+        <div class="project-title-row">
+          <h1 class="project-title">ZYPHERS <span class="badge-tag">SIH-2026 · PS-26061</span></h1>
+          <span class="system-subtitle">AI-Driven Smart Microgrid Energy Management System</span>
+        </div>
       </div>
     </div>
-    <div class="masthead-ribbon" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+
+    <!-- Active Station Selector & Coordinates -->
+    <div class="masthead-station-card">
+      <div class="station-meta-row">
+        <label for="stationSelect" class="station-selector-label">ACTIVE OUTPOST</label>
+        <span class="station-coord-badge" id="stationCoords">69°24'S 76°11'E</span>
+      </div>
+      <div class="station-select-wrapper">
+        <select id="stationSelect" class="station-dropdown">
+          <option value="Bharati — Antarctica" selected>Bharati Station · Larsemann Hills, Antarctica</option>
+          <option value="Maitri — Antarctica">Maitri Station · Schirmacher Oasis, Antarctica</option>
+          <option value="Himadri — Arctic">Himadri Station · Ny-Ålesund, Svalbard (Arctic)</option>
+        </select>
+      </div>
+      <div class="station-sync-bar">
+        <span class="sync-indicator pulse-green"></span>
+        <span>Telemetry Synchronized · <strong id="lastSyncTime">13:35 IST</strong></span>
+      </div>
+    </div>
+
+    <!-- Simulator Progression Widget -->
+    <div class="simulation-controller">
+      <div class="sim-header">
+        <span class="sim-title">TIME ENGINE</span>
+        <span class="sim-badge" id="simModeBadge">LIVE LOOP</span>
+      </div>
+      <div class="sim-actions">
+        <button class="sim-ctrl-btn" id="simPlayPauseBtn" title="Play / Pause simulation">⏸ Pause</button>
+        <button class="sim-ctrl-btn" id="simStepBtn" title="Step +1 Hour Ahead">⏭ +1h</button>
+        <button class="sim-ctrl-btn" id="simResetBtn" title="Reset to Start">↺ Reset</button>
+      </div>
+      <div class="sim-progress-track">
+        <div class="sim-progress-fill" id="simProgressFill" style="width: 2%;"></div>
+      </div>
+      <div class="sim-timestamp-label">
+        <span id="simTimestamp">2025-01-01 00:00:00</span>
+        <span id="simIndexLabel">Record: 1 / 26280</span>
+      </div>
+    </div>
   </header>
 
-  <nav class="top-nav" aria-label="Primary navigation">
-    <a class="active" href="#main">Overview</a>
-    <a href="#station-overview">Station network</a>
-    <a href="#forecast">Energy forecast</a>
-    <a href="#mix">Fuel &amp; renewables</a>
-    <a href="#alerts">Alerts</a>
-    <a href="#reports">Reports</a>
+  <!-- Top Navigation Tabs -->
+  <nav class="command-nav" aria-label="Command sections">
+    <button class="nav-tab active" data-tab="tab-operations">
+      <span class="nav-icon">⚡</span> Operations Console
+    </button>
+    <button class="nav-tab" data-tab="tab-topology">
+      <span class="nav-icon">🕸️</span> Microgrid Flow
+    </button>
+    <button class="nav-tab" data-tab="tab-optimizer">
+      <span class="nav-icon">🧠</span> AI Optimizer &amp; Merit Order
+    </button>
+    <button class="nav-tab" data-tab="tab-prioritization">
+      <span class="nav-icon">🛡️</span> Load Shedding Matrix
+    </button>
+    <button class="nav-tab" data-tab="tab-scenarios">
+      <span class="nav-icon">🌪️</span> Stress Simulator
+    </button>
+    <button class="nav-tab" data-tab="tab-alerts">
+      <span class="nav-icon">🚨</span> Watch &amp; Alerts <span class="alert-count-pip" id="tabAlertCount">0</span>
+    </button>
   </nav>
 
+  <!-- Main Grid Dashboard Shell -->
   <main id="main" class="dashboard-shell">
-    <aside class="left-rail" id="station-overview">
-      <div class="rail-heading"><div><span class="eyebrow">Command scope</span><h2>Energy data modules</h2></div><span class="rail-symbol">⌘</span></div>
-
-      <div class="station-card">
-        <label for="stationSelect">Active station</label>
-        <select id="stationSelect">
-          <option>Bharati — Antarctica</option>
-          <option>Maitri — Antarctica</option>
-          <option>Himadri — Arctic</option>
-        </select>
-        <p class="station-sync"><span class="status-dot"></span> Connected · last sync <span id="lastSync">08:54 IST</span></p>
-      </div>
-
-      <div class="module-list">
-        <button class="module-trigger open" type="button" data-target="acc-station">Station status <span>⌃</span></button>
-        <div class="module-body open" id="acc-station"><button class="station active" data-station="Bharati — Antarctica">Bharati · Larsemann Hills <span>●</span></button><button class="station" data-station="Maitri — Antarctica">Maitri · Schirmacher Oasis</button><button class="station" data-station="Himadri — Arctic">Himadri · Ny-Ålesund</button></div>
-        <button class="module-trigger" type="button" data-target="acc-load">Load forecasting <span>›</span></button>
-        <div class="module-body" id="acc-load"><p>24–72h demand forecast from the ML model, by zone.</p></div>
-        <button class="module-trigger" type="button" data-target="acc-renew">Renewable generation <span>›</span></button>
-        <div class="module-body" id="acc-renew"><p>Live solar and wind output plus generation history.</p></div>
-        <button class="module-trigger" type="button" data-target="acc-batt">Battery &amp; fuel reserve <span>›</span></button>
-        <div class="module-body" id="acc-batt"><p>State of charge, diesel tank level, days of autonomy.</p></div>
-        <button class="module-trigger" type="button" data-target="acc-sim">Scenario simulator <span>›</span></button>
-        <div class="module-body" id="acc-sim"><p>Run stress scenarios against the optimizer.</p></div>
-        <button class="module-trigger" type="button" data-target="acc-hist">Historical data <span>›</span></button>
-        <div class="module-body" id="acc-hist"><p>Full time-series export by station and date range.</p></div>
-      </div>
-
-      <div class="rail-note"><div class="rail-note-title">Data governance note</div><p>Model outputs are indicative prototype values, grounded in physics-informed simulation using cited NCPOR/IMD/NOAA/BharatBench climate data. They do not represent live station telemetry.</p></div>
-      <div class="rail-links"><a href="#reports">⇩ Export station brief</a><a href="#main">? Operator guidance</a></div>
-    </aside>
-
-    <section class="main-column">
-      <div class="page-heading">
-        <div><div class="breadcrumb">Operations <span>›</span> Station overview <span>›</span> <strong id="stationCrumb">Bharati</strong></div><h2>Dashboard <span class="inline-nominal"><span class="status-dot"></span> Nominal</span></h2><p>Monitor demand, renewable contribution, fuel reserve, and optimizer recommendations.</p></div>
-        <div class="heading-actions"><button class="secondary-button" type="button">⇩ Brief</button><button class="primary-button" type="button">✦ Run analysis</button></div>
-      </div>
-
-      <div class="context-strip">
-        <div class="context-item"><span class="context-icon">⌁</span><div><span>Station weather</span><strong id="ctxWeather">— °C</strong><small id="ctxWind">·</small></div></div>
-        <div class="context-item"><span class="context-icon">◌</span><div><span>Weather condition</span><strong id="ctxCondition">—</strong></div></div>
-        <div class="context-item"><span class="context-icon">ϟ</span><div><span>Live demand</span><strong id="ctxDemand">— kW</strong></div></div>
-        <div class="context-item"><span class="context-icon amber">≈</span><div><span>Renewable yield</span><strong id="ctxRenewable">— %</strong></div></div>
-      </div>
-
-      <section class="section-card" id="forecast">
-        <div class="section-heading"><div><span class="eyebrow">Dashboard at a glance</span><h3>Power generation vs. demand</h3></div><a href="#forecast">View forecast details ›</a></div>
-        <div class="filter-bar">
-          <div class="filter-legend"><span><i class="legend-square blue"></i> Actual supply</span><span><i class="legend-square red"></i> Load demand</span><span><i class="legend-square forecast"></i> AI forecast</span></div>
-          <form id="filterForm" class="date-form"><label>From <input type="month" id="fromDate" value="2026-08"></label><label>To <input type="month" id="toDate" value="2026-09"></label><button type="submit" class="small-primary">Apply</button></form>
+    <!-- Left Operations Column -->
+    <div class="main-column">
+      
+      <!-- Critical HUD Telemetry Cards -->
+      <section class="telemetry-hud" aria-label="Real-time telemetry indicators">
+        
+        <!-- Metric 1: Net Station Demand -->
+        <div class="hud-card demand-card">
+          <div class="hud-header">
+            <span class="hud-label">NET LOAD DEMAND</span>
+            <span class="hud-tag" id="hudDemandTag">NOMINAL</span>
+          </div>
+          <div class="hud-value-row">
+            <span class="hud-val" id="valDemand">45.0</span>
+            <span class="hud-unit">kW</span>
+          </div>
+          <div class="hud-subtext">
+            <span>Peak: 250 kW</span>
+            <span id="valHeadroom">Headroom: 82%</span>
+          </div>
+          <div class="hud-bar-track">
+            <div class="hud-bar-fill fill-coral" id="barDemand" style="width: 18%;"></div>
+          </div>
         </div>
-        <div class="chart-wrap"><canvas id="genDemandChart" height="230"></canvas></div>
-        <div class="chart-foot"><span id="forecastConfidence">ⓘ Forecast horizon: next window</span><span id="forecastRefresh">Source: physics-informed simulation</span></div>
+
+        <!-- Metric 2: Solar PV Generation -->
+        <div class="hud-card solar-card">
+          <div class="hud-header">
+            <span class="hud-label">SOLAR PV ARRAY</span>
+            <span class="hud-tag" id="hudSolarTag">IRRADIANCE 0</span>
+          </div>
+          <div class="hud-value-row">
+            <span class="hud-val" id="valSolar">0.0</span>
+            <span class="hud-unit">kW</span>
+          </div>
+          <div class="hud-subtext">
+            <span>Installed: 120 kWp</span>
+            <span id="valSunElevation">Polar Night</span>
+          </div>
+          <div class="hud-bar-track">
+            <div class="hud-bar-fill fill-solar" id="barSolar" style="width: 0%;"></div>
+          </div>
+        </div>
+
+        <!-- Metric 3: Wind Turbine Array -->
+        <div class="hud-card wind-card">
+          <div class="hud-header">
+            <span class="hud-label">ARCTIC WIND TURBINES</span>
+            <span class="hud-tag" id="hudWindTag">ACTIVE</span>
+          </div>
+          <div class="hud-value-row">
+            <span class="hud-val" id="valWind">120.0</span>
+            <span class="hud-unit">kW</span>
+          </div>
+          <div class="hud-subtext">
+            <span id="valWindSpeed">Wind: 14.5 m/s</span>
+            <span>4x 30kW Mast</span>
+          </div>
+          <div class="hud-bar-track">
+            <div class="hud-bar-fill fill-cyan" id="barWind" style="width: 100%;"></div>
+          </div>
+        </div>
+
+        <!-- Metric 4: Battery Energy Storage (BESS) -->
+        <div class="hud-card bess-card">
+          <div class="hud-header">
+            <span class="hud-label">BESS STORAGE (LFP)</span>
+            <span class="hud-tag" id="hudBessTag">IDLE / SURPLUS</span>
+          </div>
+          <div class="hud-value-row">
+            <span class="hud-val" id="valBattery">92.6</span>
+            <span class="hud-unit">%</span>
+          </div>
+          <div class="hud-subtext">
+            <span id="valBatteryKwh">92.6 kWh / 100 kWh</span>
+            <span id="valBessStatus">Float Standby</span>
+          </div>
+          <div class="hud-bar-track">
+            <div class="hud-bar-fill fill-emerald" id="barBattery" style="width: 92.6%;"></div>
+          </div>
+        </div>
+
+        <!-- Metric 5: Diesel Fuel Reserve & Autonomy -->
+        <div class="hud-card diesel-card">
+          <div class="hud-header">
+            <span class="hud-label">DIESEL RESERVE &amp; RUNWAY</span>
+            <span class="hud-tag" id="hudDieselTag">GENSET OFF</span>
+          </div>
+          <div class="hud-value-row">
+            <span class="hud-val" id="valFuel">5000</span>
+            <span class="hud-unit">L</span>
+          </div>
+          <div class="hud-subtext">
+            <strong class="runway-highlight" id="valAutonomyDays">Autonomy: 52 Days</strong>
+            <span id="valFuelPercent">100% Tank</span>
+          </div>
+          <div class="hud-bar-track">
+            <div class="hud-bar-fill fill-amber" id="barFuel" style="width: 100%;"></div>
+          </div>
+        </div>
+
+        <!-- Metric 6: Clean Fuel Saved & Carbon Offset -->
+        <div class="hud-card eco-card">
+          <div class="hud-header">
+            <span class="hud-label">CLEAN IMPACT &amp; SAVINGS</span>
+            <span class="hud-tag green">100% RENEWABLE</span>
+          </div>
+          <div class="hud-value-row">
+            <span class="hud-val" id="valFuelSaved">4.5</span>
+            <span class="hud-unit">L/h Saved</span>
+          </div>
+          <div class="hud-subtext">
+            <span id="valCo2Offset">Offset: 12.0 kg CO₂/h</span>
+            <span>Zero Genset Burn</span>
+          </div>
+          <div class="hud-bar-track">
+            <div class="hud-bar-fill fill-aurora" id="barEco" style="width: 100%;"></div>
+          </div>
+        </div>
+
       </section>
 
-      <div class="metric-grid">
-        <div class="metric-card blue-accent"><span class="metric-label">Air temperature</span><strong id="mTemp">−18 °C</strong><small>Station mast · simulated</small></div>
-        <div class="metric-card amber-accent"><span class="metric-label">Solar output</span><strong id="mSolar">120 kW</strong><small>PV array · instantaneous</small></div>
-        <div class="metric-card green-accent"><span class="metric-label">Battery reserve</span><strong id="mBattery">82 %</strong><small>Li-ion bank · state of charge</small></div>
-        <div class="metric-card navy-accent"><span class="metric-label">Fuel reserve</span><strong id="mFuel">74 %</strong><small id="mFuelLiters">— L remaining</small></div>
+      <!-- Weather & Environmental Telemetry Ribbon -->
+      <div class="env-ribbon">
+        <div class="env-pill">
+          <span class="env-icon">🌡️</span>
+          <div>
+            <span class="env-kicker">TEMPERATURE</span>
+            <strong id="envTemp">+0.1 °C</strong>
+          </div>
+        </div>
+        <div class="env-pill">
+          <span class="env-icon">❄️</span>
+          <div>
+            <span class="env-kicker">ATMOSPHERE</span>
+            <strong id="envWeather">Clear Polar Sky</strong>
+          </div>
+        </div>
+        <div class="env-pill">
+          <span class="env-icon">🌬️</span>
+          <div>
+            <span class="env-kicker">WIND CHILL</span>
+            <strong id="envWindChill">-4.2 °C</strong>
+          </div>
+        </div>
+        <div class="env-pill">
+          <span class="env-icon">⚡</span>
+          <div>
+            <span class="env-kicker">RENEWABLE FRACTION</span>
+            <strong id="envRenewablePct">100.0%</strong>
+          </div>
+        </div>
+        <div class="env-pill">
+          <span class="env-icon">🛰️</span>
+          <div>
+            <span class="env-kicker">ACTIVE SCENARIO</span>
+            <strong id="envScenario" class="scenario-name">Normal Baseline</strong>
+          </div>
+        </div>
       </div>
 
-      <div class="two-up" id="mix">
-        <section class="section-card chart-panel"><div class="section-heading"><div><span class="eyebrow">Energy mix</span><h3>Renewable vs. diesel contribution</h3></div></div><p class="chart-description">Recent energy mix over the current window (kW)</p><div class="chart-wrap compact"><canvas id="mixChart" height="210"></canvas></div><div class="chart-foot"><span>Blue: renewable · Saffron: diesel</span><span>Live simulated window</span></div></section>
-        <section class="section-card dispatch-panel"><div class="section-heading"><div><span class="eyebrow">Dispatch share</span><h3>Current energy mix</h3></div></div><div class="dispatch-list"><div><span><i class="dispatch-dot blue"></i> Wind + solar</span><strong id="dispRenewable">— %</strong></div><div><span><i class="dispatch-dot green"></i> Battery discharge</span><strong id="dispBattery">— %</strong></div><div><span><i class="dispatch-dot amber"></i> Diesel gensets</span><strong id="dispDiesel">— %</strong></div><div><span><i class="dispatch-dot grey"></i> Grid reserve</span><strong id="dispGrid">0 %</strong></div></div><div class="dispatch-status" id="dispatchStatus"><span class="status-dot"></span> <span id="dispatchStatusText">Awaiting data…</span></div></section>
+      <!-- Tab Content 1: Operations Console (Charts + Dispatch) -->
+      <div class="tab-pane active" id="tab-operations">
+        
+        <!-- Primary Chart: Generation vs Demand vs Forecast -->
+        <section class="panel-card chart-hero-panel">
+          <div class="panel-header">
+            <div class="header-titles">
+              <span class="kicker">TIME-SERIES TELEMETRY &amp; AI PREDICTIONS</span>
+              <h2 class="panel-title">Power Generation vs. Load Demand (kW)</h2>
+            </div>
+            <div class="chart-controls">
+              <div class="chart-legend-chips">
+                <span class="chip-legend red"><span class="chip-dot"></span> Demand</span>
+                <span class="chip-legend yellow"><span class="chip-dot"></span> Solar</span>
+                <span class="chip-legend cyan"><span class="chip-dot"></span> Wind</span>
+                <span class="chip-legend purple"><span class="chip-dot"></span> AI Forecast (6h)</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="chart-viewport">
+            <canvas id="genDemandChart" height="280"></canvas>
+          </div>
+
+          <div class="chart-footer-metrics">
+            <div class="footer-stat">
+              <span class="stat-label">AI PREDICTED DEMAND (6h)</span>
+              <strong id="forecastDemandVal">— kW</strong>
+            </div>
+            <div class="footer-stat">
+              <span class="stat-label">AI PREDICTED SOLAR (6h)</span>
+              <strong id="forecastSolarVal">— kW</strong>
+            </div>
+            <div class="footer-stat">
+              <span class="stat-label">AI PREDICTED WIND (6h)</span>
+              <strong id="forecastWindVal">— kW</strong>
+            </div>
+            <div class="footer-stat">
+              <span class="stat-label">ALGORITHM</span>
+              <span>Damped Exponential Smoothing (SES)</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Dispatch Split & Recommendation -->
+        <div class="two-panel-grid">
+          
+          <!-- Dispatch Share Breakdown -->
+          <section class="panel-card">
+            <div class="panel-header">
+              <div>
+                <span class="kicker">REAL-TIME MIX</span>
+                <h3 class="panel-title">Active Power Dispatch (kW)</h3>
+              </div>
+            </div>
+            <div class="chart-viewport-compact">
+              <canvas id="mixChart" height="200"></canvas>
+            </div>
+            <div class="dispatch-stat-bars">
+              <div class="dispatch-bar-item">
+                <div class="dispatch-meta">
+                  <span>Solar PV</span>
+                  <strong id="dispSolarVal">0 kW</strong>
+                </div>
+                <div class="micro-track"><div class="micro-fill fill-solar" id="dispSolarBar" style="width: 0%"></div></div>
+              </div>
+              <div class="dispatch-bar-item">
+                <div class="dispatch-meta">
+                  <span>Wind Turbines</span>
+                  <strong id="dispWindVal">45 kW</strong>
+                </div>
+                <div class="micro-track"><div class="micro-fill fill-cyan" id="dispWindBar" style="width: 100%"></div></div>
+              </div>
+              <div class="dispatch-bar-item">
+                <div class="dispatch-meta">
+                  <span>BESS Discharge</span>
+                  <strong id="dispBatteryVal">0 kW</strong>
+                </div>
+                <div class="micro-track"><div class="micro-fill fill-emerald" id="dispBatteryBar" style="width: 0%"></div></div>
+              </div>
+              <div class="dispatch-bar-item">
+                <div class="dispatch-meta">
+                  <span>Diesel Genset</span>
+                  <strong id="dispDieselVal">0 kW</strong>
+                </div>
+                <div class="micro-track"><div class="micro-fill fill-amber" id="dispDieselBar" style="width: 0%"></div></div>
+              </div>
+            </div>
+          </section>
+
+          <!-- AI Optimization Directive -->
+          <section class="panel-card ai-directive-card">
+            <div class="panel-header">
+              <div>
+                <span class="kicker">EMS DECISION ENGINE</span>
+                <h3 class="panel-title">AI Optimization Directive</h3>
+              </div>
+              <span class="directive-badge green" id="optStatusBadge">OPTIMAL</span>
+            </div>
+
+            <div class="directive-body">
+              <div class="directive-main-box">
+                <span class="directive-icon">🤖</span>
+                <div class="directive-text-wrap">
+                  <span class="directive-kicker">RECOMMENDED DISPATCH ACTION</span>
+                  <p class="directive-text" id="aiActionText">Use Renewable Energy — Diesel OFF</p>
+                </div>
+              </div>
+
+              <div class="merit-order-list">
+                <div class="merit-item active">
+                  <span class="merit-num">1</span>
+                  <div class="merit-info">
+                    <strong>Tier 1: Clean Solar</strong>
+                    <small>Primary zero-marginal-cost generation</small>
+                  </div>
+                  <span class="merit-status online" id="meritSolar">DISPATCHED</span>
+                </div>
+                <div class="merit-item active">
+                  <span class="merit-num">2</span>
+                  <div class="merit-info">
+                    <strong>Tier 2: Wind Turbines</strong>
+                    <small>Continuous polar wind harvesting</small>
+                  </div>
+                  <span class="merit-status online" id="meritWind">PRIMARY</span>
+                </div>
+                <div class="merit-item">
+                  <span class="merit-num">3</span>
+                  <div class="merit-info">
+                    <strong>Tier 3: BESS Storage</strong>
+                    <small>Buffer fluctuations &amp; peak shave</small>
+                  </div>
+                  <span class="merit-status standby" id="meritBattery">STANDBY</span>
+                </div>
+                <div class="merit-item">
+                  <span class="merit-num">4</span>
+                  <div class="merit-info">
+                    <strong>Tier 4: Diesel Genset</strong>
+                    <small>Strict contingency last-resort only</small>
+                  </div>
+                  <span class="merit-status offline" id="meritDiesel">OFF</span>
+                </div>
+              </div>
+
+              <div class="directive-footer">
+                <span>Estimated Fuel Saved: <strong id="recFuelSaved">4.5 L/hr</strong></span>
+                <button class="action-btn-glow" id="applyPlanBtn" type="button">Enforce Optimal Dispatch</button>
+              </div>
+            </div>
+          </section>
+
+        </div>
       </div>
 
-      <section class="section-card scenario-panel"><div class="section-heading"><div><span class="eyebrow">Scenario simulator</span><h3>Stress-test the next operating window</h3></div><a href="#scenario">Methodology ›</a></div><div class="scenario-buttons"><button class="sim-btn active" data-scenario="normal" type="button"><strong>Normal day</strong><small>Baseline dispatch</small></button><button class="sim-btn" data-scenario="storm" type="button"><strong>Polar night + storm</strong><small>Low renewable window</small></button><button class="sim-btn" data-scenario="delay" type="button"><strong>Fuel resupply delay</strong><small>Reserve preservation</small></button><button class="sim-btn" data-scenario="critical" type="button"><strong>Critical alert test</strong><small>Contingency drill</small></button></div><div class="recommendation"><div class="recommendation-icon">✦</div><div><strong>AI recommendation <span>·</span></strong><p id="aiRecText">Operating within nominal envelope.</p><small id="recConfidence">Model refreshed —</small></div><button class="secondary-button" type="button">Accept plan ↗</button></div></section>
+      <!-- Tab Content 2: Interactive Microgrid Synoptic Diagram -->
+      <div class="tab-pane" id="tab-topology">
+        <section class="panel-card synoptic-panel">
+          <div class="panel-header">
+            <div>
+              <span class="kicker">SYSTEM SCHEMATIC</span>
+              <h2 class="panel-title">Polar Station Microgrid Energy Flow Synoptic</h2>
+            </div>
+            <div class="synoptic-legend">
+              <span class="legend-dot green"></span> Active Flow
+              <span class="legend-dot amber"></span> Standby Flow
+              <span class="legend-dot red"></span> Curtailment
+            </div>
+          </div>
 
-      <section class="section-card alerts-panel" id="alerts"><div class="section-heading"><div><span class="eyebrow">Operational watch</span><h3>Active alerts &amp; actions</h3></div><a href="#alerts">Open alert register ›</a></div><div id="alertsList" class="alert-list"><div class="alert-row alert-heading"><span>Status</span><span>Event</span><span>Impact</span><span>Recommended action</span><span>Owner</span></div></div></section>
-    </section>
+          <!-- Interactive SVG Microgrid Diagram -->
+          <div class="synoptic-container">
+            <svg class="synoptic-svg" viewBox="0 0 900 420" xmlns="http://www.w3.org/2000/svg">
+              <!-- Grid background -->
+              <defs>
+                <pattern id="gridPattern" width="30" height="30" patternUnits="userSpaceOnUse">
+                  <path d="M 30 0 L 0 0 0 30" fill="none" stroke="rgba(56, 189, 248, 0.05)" stroke-width="1"/>
+                </pattern>
+                <!-- Animated glowing beam gradients -->
+                <linearGradient id="flowGreen" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#10b981"/>
+                  <stop offset="100%" stop-color="#38bdf8"/>
+                </linearGradient>
+                <linearGradient id="flowAmber" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#f59e0b"/>
+                  <stop offset="100%" stop-color="#ef4444"/>
+                </linearGradient>
+              </defs>
+              <rect width="900" height="420" fill="url(#gridPattern)" />
 
-    <aside class="assistant-panel">
-      <div class="assistant-header"><div class="assistant-avatar">✦</div><div><span class="eyebrow">EMS assistant</span><h2>Energy operations copilot</h2></div><span class="assistant-live"><span class="status-dot"></span> Online</span></div>
-      <div class="assistant-context">Connected to station telemetry · Groq-powered backend</div>
-      <div class="chat-messages" id="chatMessages"><div class="chat-welcome"><span>✦</span><div><strong>Ask the station assistant</strong><p>Forecasts, reserve health, dispatch plans, and scenario recommendations.</p></div></div><div class="msg bot">Good morning. I can explain the forecast, reserve margin, or dispatch recommendation.</div></div>
-      <div class="quick-prompts"><span>Suggested prompts</span><button type="button" data-prompt="What is the fuel reserve runway?">Fuel runway <b>›</b></button><button type="button" data-prompt="Explain the load forecast">Explain forecast <b>›</b></button><button type="button" data-prompt="Recommend a dispatch plan">Dispatch plan <b>›</b></button></div>
-      <form class="assistant-input" id="chatForm"><input type="text" id="chatInput" placeholder="Ask the assistant" autocomplete="off" /><button type="submit" aria-label="Send message">➤</button></form>
-      <p class="assistant-disclaimer">ⓘ AI outputs are advisory. Validate against live station telemetry before action.</p>
+              <!-- Main Microgrid Bus (Central Spine) -->
+              <rect x="420" y="50" width="60" height="320" rx="10" fill="rgba(15, 34, 61, 0.85)" stroke="#38bdf8" stroke-width="2" class="bus-bar"/>
+              <text x="450" y="215" fill="#f8fafc" font-size="11" font-family="JetBrains Mono" text-anchor="middle" transform="rotate(-90 450 215)" letter-spacing="3">415V AC MICROGRID BUS</text>
+
+              <!-- Node 1: Solar Array (Top Left) -->
+              <g class="synoptic-node" transform="translate(60, 50)">
+                <rect width="180" height="85" rx="8" fill="rgba(10, 22, 40, 0.85)" stroke="#f59e0b" stroke-width="1.5" />
+                <text x="20" y="28" fill="#f59e0b" font-family="Space Grotesk" font-weight="700" font-size="13">☀️ SOLAR PV ARRAY</text>
+                <text x="20" y="48" fill="#94a3b8" font-size="11">Capacity: 120 kWp</text>
+                <text x="20" y="68" fill="#f8fafc" font-family="JetBrains Mono" font-size="14" font-weight="700" id="topo-solar-val">0.0 kW</text>
+                <!-- Flow path to bus -->
+                <path d="M 180 42 L 360 42 L 360 120 L 420 120" fill="none" stroke="#f59e0b" stroke-width="2" stroke-dasharray="6,4" class="flow-path-solar" />
+              </g>
+
+              <!-- Node 2: Wind Turbines (Mid Left) -->
+              <g class="synoptic-node" transform="translate(60, 160)">
+                <rect width="180" height="85" rx="8" fill="rgba(10, 22, 40, 0.85)" stroke="#38bdf8" stroke-width="1.5" />
+                <text x="20" y="28" fill="#38bdf8" font-family="Space Grotesk" font-weight="700" font-size="13">🌬️ WIND TURBINE FARM</text>
+                <text x="20" y="48" fill="#94a3b8" font-size="11">4x 30kW Low-Temp Mast</text>
+                <text x="20" y="68" fill="#f8fafc" font-family="JetBrains Mono" font-size="14" font-weight="700" id="topo-wind-val">120.0 kW</text>
+                <!-- Flow path to bus -->
+                <path d="M 180 42 L 420 42" fill="none" stroke="#38bdf8" stroke-width="3" stroke-dasharray="8,4" class="flow-path-wind" />
+              </g>
+
+              <!-- Node 3: BESS Battery Storage (Bottom Left) -->
+              <g class="synoptic-node" transform="translate(60, 275)">
+                <rect width="180" height="85" rx="8" fill="rgba(10, 22, 40, 0.85)" stroke="#10b981" stroke-width="1.5" />
+                <text x="20" y="28" fill="#10b981" font-family="Space Grotesk" font-weight="700" font-size="13">🔋 BESS STORAGE BANK</text>
+                <text x="20" y="48" fill="#94a3b8" font-size="11">LiFePO4 · 100 kWh</text>
+                <text x="20" y="68" fill="#f8fafc" font-family="JetBrains Mono" font-size="14" font-weight="700" id="topo-battery-val">92.6% (Float)</text>
+                <!-- Bilateral Flow path to bus -->
+                <path d="M 180 42 L 360 42 L 360 300 L 420 300" fill="none" stroke="#10b981" stroke-width="2" stroke-dasharray="6,4" class="flow-path-battery" />
+              </g>
+
+              <!-- Node 4: Diesel Genset (Top Right) -->
+              <g class="synoptic-node" transform="translate(660, 50)">
+                <rect width="180" height="85" rx="8" fill="rgba(10, 22, 40, 0.85)" stroke="#f97316" stroke-width="1.5" id="topo-diesel-box"/>
+                <text x="20" y="28" fill="#f97316" font-family="Space Grotesk" font-weight="700" font-size="13">⛽ DIESEL GENSET #1 &amp; #2</text>
+                <text x="20" y="48" fill="#94a3b8" font-size="11">Spinning Reserve (Auto)</text>
+                <text x="20" y="68" fill="#f8fafc" font-family="JetBrains Mono" font-size="14" font-weight="700" id="topo-diesel-val">0.0 kW (STANDBY)</text>
+                <!-- Flow path from diesel to bus -->
+                <path d="M 0 42 L -120 42 L -120 120 L -180 120" fill="none" stroke="#f97316" stroke-width="2" stroke-dasharray="4,4" opacity="0.4" class="flow-path-diesel" />
+              </g>
+
+              <!-- Node 5: Station Loads (Mid/Bottom Right) -->
+              <g class="synoptic-node" transform="translate(660, 160)">
+                <rect width="180" height="200" rx="8" fill="rgba(10, 22, 40, 0.85)" stroke="#e11d48" stroke-width="1.5" />
+                <text x="20" y="28" fill="#f43f5e" font-family="Space Grotesk" font-weight="700" font-size="13">🏢 STATION LOAD ZONES</text>
+                
+                <text x="20" y="55" fill="#f8fafc" font-size="11" font-family="JetBrains Mono">🔥 Life-Support: 18.0 kW</text>
+                <circle cx="160" cy="52" r="4" fill="#10b981" />
+
+                <text x="20" y="85" fill="#f8fafc" font-size="11" font-family="JetBrains Mono">📡 Deep-Space Comms: 6.8 kW</text>
+                <circle cx="160" cy="82" r="4" fill="#10b981" />
+
+                <text x="20" y="115" fill="#f8fafc" font-size="11" font-family="JetBrains Mono">🔬 Research Labs: 11.2 kW</text>
+                <circle cx="160" cy="112" r="4" fill="#10b981" />
+
+                <text x="20" y="145" fill="#f8fafc" font-size="11" font-family="JetBrains Mono">💡 Aux Facilities: 9.0 kW</text>
+                <circle cx="160" cy="142" r="4" fill="#10b981" />
+
+                <rect x="20" y="165" width="140" height="22" rx="4" fill="rgba(244, 63, 94, 0.15)" stroke="#f43f5e" stroke-width="1"/>
+                <text x="90" y="180" fill="#f43f5e" font-family="JetBrains Mono" font-size="11" font-weight="700" text-anchor="middle" id="topo-total-demand">TOTAL: 45.0 kW</text>
+
+                <!-- Flow path from bus to load -->
+                <path d="M -180 80 L 0 80" fill="none" stroke="#f43f5e" stroke-width="3" stroke-dasharray="8,4" class="flow-path-load" />
+              </g>
+            </svg>
+          </div>
+        </section>
+      </div>
+
+      <!-- Tab Content 3: Load Prioritization & Shedding Matrix -->
+      <div class="tab-pane" id="tab-prioritization">
+        <section class="panel-card">
+          <div class="panel-header">
+            <div>
+              <span class="kicker">CIRCUIT PROTECTION MATRIX</span>
+              <h2 class="panel-title">Automated Polar Load Shedding &amp; Priority Tiering</h2>
+            </div>
+            <span class="directive-badge green" id="loadStatusPill">ALL CIRCUITS POWERED</span>
+          </div>
+
+          <div class="priority-cards-grid">
+            
+            <!-- Tier 1: Heating -->
+            <div class="priority-card tier-critical">
+              <div class="priority-card-header">
+                <span class="tier-chip">TIER 1 · CRITICAL</span>
+                <span class="circuit-state state-on" id="stateHeating">ON</span>
+              </div>
+              <h4 class="circuit-name">🔥 Station Heating &amp; Life Support</h4>
+              <p class="circuit-desc">Habitat heating, water line freeze protection, ventilation. Non-sheddable under any operational contingency.</p>
+              <div class="circuit-metrics">
+                <div>
+                  <span class="cm-label">ESTIMATED DRAW</span>
+                  <strong id="loadHeatingVal">18.0 kW (40%)</strong>
+                </div>
+                <div>
+                  <span class="cm-label">DISPATCH POLICY</span>
+                  <span>Unconditional Must-Run</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tier 1: Communication -->
+            <div class="priority-card tier-critical">
+              <div class="priority-card-header">
+                <span class="tier-chip">TIER 1 · CRITICAL</span>
+                <span class="circuit-state state-on" id="stateComms">ON</span>
+              </div>
+              <h4 class="circuit-name">📡 Satellite &amp; Emergency Radio</h4>
+              <p class="circuit-desc">GSAT-7A uplink, VHF polar maritime beacons, station inter-node datalink and emergency distress beacons.</p>
+              <div class="circuit-metrics">
+                <div>
+                  <span class="cm-label">ESTIMATED DRAW</span>
+                  <strong id="loadCommsVal">6.8 kW (15%)</strong>
+                </div>
+                <div>
+                  <span class="cm-label">DISPATCH POLICY</span>
+                  <span>Unconditional Must-Run</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tier 2: Scientific Labs -->
+            <div class="priority-card tier-research">
+              <div class="priority-card-header">
+                <span class="tier-chip">TIER 2 · SCIENTIFIC</span>
+                <span class="circuit-state state-on" id="stateResearch">ON</span>
+              </div>
+              <h4 class="circuit-name">🔬 Scientific Research Instrumentation</h4>
+              <p class="circuit-desc">Atmospheric lidar, ionospheric radar, seismological sensors, spectrophotometers, and cryosphere logging.</p>
+              <div class="circuit-metrics">
+                <div>
+                  <span class="cm-label">ESTIMATED DRAW</span>
+                  <strong id="loadResearchVal">11.3 kW (25%)</strong>
+                </div>
+                <div>
+                  <span class="cm-label">DISPATCH POLICY</span>
+                  <span>Throttled to 50% on Level-2 Alert</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tier 3: Non-critical Auxiliaries -->
+            <div class="priority-card tier-aux">
+              <div class="priority-card-header">
+                <span class="tier-chip">TIER 3 · NON-ESSENTIAL</span>
+                <span class="circuit-state state-on" id="stateNonCritical">ON</span>
+              </div>
+              <h4 class="circuit-name">💡 Auxiliary Living Quarters &amp; Workshops</h4>
+              <p class="circuit-desc">Laundry machines, vehicle charging heaters, entertainment lounges, machine tool benches, and non-essential lighting.</p>
+              <div class="circuit-metrics">
+                <div>
+                  <span class="cm-label">ESTIMATED DRAW</span>
+                  <strong id="loadNonCriticalVal">9.0 kW (20%)</strong>
+                </div>
+                <div>
+                  <span class="cm-label">DISPATCH POLICY</span>
+                  <span>First to Shed on Generator Backup</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+      </div>
+
+      <!-- Tab Content 4: Scenario Stress-Testing Simulator -->
+      <div class="tab-pane" id="tab-scenarios">
+        <section class="panel-card">
+          <div class="panel-header">
+            <div>
+              <span class="kicker">STRESS INJECTION</span>
+              <h2 class="panel-title">Polar Contingency &amp; Weather Stress Simulator</h2>
+            </div>
+            <span>Ground-truth physics validation</span>
+          </div>
+
+          <p class="section-lead">Inject calibrated environmental disruptions and equipment contingencies to inspect the autonomous EMS response in real time.</p>
+
+          <div class="scenarios-grid">
+            
+            <div class="scenario-box active" data-scenario="normal">
+              <div class="scenario-icon">☀️</div>
+              <div class="scenario-content">
+                <strong>Scenario 1: Baseline Polar Operations</strong>
+                <p>Standard seasonal conditions. Solar and wind generation fully cover base loads with zero generator emissions.</p>
+                <div class="scenario-tags">
+                  <span class="tag-pill">Renewables Active</span>
+                  <span class="tag-pill">Diesel OFF</span>
+                </div>
+              </div>
+              <button class="sim-btn-trigger" type="button">Activate</button>
+            </div>
+
+            <div class="scenario-box" data-scenario="storm">
+              <div class="scenario-icon">🌨️</div>
+              <div class="scenario-content">
+                <strong>Scenario 2: Polar Night &amp; Blizzard</strong>
+                <p>Zero solar irradiance, heavy storm conditions. Tests high-wind turbine output and emergency diesel transitions.</p>
+                <div class="scenario-tags">
+                  <span class="tag-pill">Zero Solar</span>
+                  <span class="tag-pill">High Wind</span>
+                </div>
+              </div>
+              <button class="sim-btn-trigger" type="button">Activate</button>
+            </div>
+
+            <div class="scenario-box" data-scenario="delay">
+              <div class="scenario-icon">🚢</div>
+              <div class="scenario-content">
+                <strong>Scenario 3: Resupply Vessel Icebound</strong>
+                <p>Simulates extended fuel preservation. Optimizer aggressively conserves diesel and shifts non-critical loads.</p>
+                <div class="scenario-tags">
+                  <span class="tag-pill">Fuel Conservation</span>
+                  <span class="tag-pill">Load Curtailment</span>
+                </div>
+              </div>
+              <button class="sim-btn-trigger" type="button">Activate</button>
+            </div>
+
+            <div class="scenario-box" data-scenario="critical">
+              <div class="scenario-icon">⚠️</div>
+              <div class="scenario-content">
+                <strong>Scenario 4: Storage &amp; Generator Fault Drill</strong>
+                <p>Battery depleted below 20%, strict diesel-only rationing. Validates essential life-support heating protection.</p>
+                <div class="scenario-tags">
+                  <span class="tag-pill">DEFCON Red</span>
+                  <span class="tag-pill">Essential Loads Only</span>
+                </div>
+              </div>
+              <button class="sim-btn-trigger" type="button">Activate</button>
+            </div>
+
+          </div>
+        </section>
+      </div>
+
+      <!-- Tab Content 5: Operational Watch & Alerts -->
+      <div class="tab-pane" id="tab-alerts">
+        <section class="panel-card">
+          <div class="panel-header">
+            <div>
+              <span class="kicker">EMS EVENT LOG</span>
+              <h2 class="panel-title">Active Station Operational Alerts</h2>
+            </div>
+            <div class="alert-filter-group">
+              <button class="filter-pill active" data-filter="all">All (Active)</button>
+              <button class="filter-pill" data-filter="critical">Critical</button>
+              <button class="filter-pill" data-filter="warning">Warnings</button>
+              <button class="filter-pill" data-filter="ok">Nominal</button>
+            </div>
+          </div>
+
+          <div class="alert-table-wrap">
+            <table class="alert-table">
+              <thead>
+                <tr>
+                  <th>SEVERITY</th>
+                  <th>SYSTEM EVENT</th>
+                  <th>TELEMETRY IMPACT</th>
+                  <th>RECOMMENDED OPERATOR ACTION</th>
+                  <th>SUBSYSTEM</th>
+                </tr>
+              </thead>
+              <tbody id="alertsTableBody">
+                <tr>
+                  <td><span class="badge-nominal">● NOMINAL</span></td>
+                  <td><strong>All Microgrid Systems Operating Within Envelope</strong></td>
+                  <td>Normal Parameters</td>
+                  <td>Routine Telemetry Watch</td>
+                  <td>EMS Core</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+    </div>
+
+    <!-- Right Column: AI Operations Copilot -->
+    <aside class="copilot-column" aria-label="AI Energy Assistant">
+      <div class="copilot-panel">
+        
+        <div class="copilot-header">
+          <div class="copilot-avatar-box">
+            <span class="copilot-avatar">✦</span>
+          </div>
+          <div class="copilot-title-box">
+            <span class="copilot-kicker">NCPOR AI AGENT</span>
+            <h3 class="copilot-name">Polar Operations Copilot</h3>
+          </div>
+          <span class="copilot-badge online" id="copilotStatusBadge">
+            <span class="status-dot pulse-green"></span> ONLINE
+          </span>
+        </div>
+
+        <div class="copilot-context-banner">
+          <span>Telemetry Context: </span>
+          <strong id="copilotContextPill">Solar 0kW · Wind 120kW · Batt 92.6% · Fuel 5000L</strong>
+        </div>
+
+        <!-- Chat Conversation Area -->
+        <div class="copilot-chat-history" id="copilotChat">
+          <div class="chat-bubble bot">
+            <div class="bubble-header">
+              <span class="sender-name">Zyphers Copilot</span>
+              <span class="timestamp">Just now</span>
+            </div>
+            <div class="bubble-body">
+              <p>Welcome to Polar Energy Command. I am monitoring Bharati Station's hybrid renewable microgrid.</p>
+              <p>Current generation is <strong>100% renewable</strong> via wind turbines. Diesel generator remains on standby. How may I assist your shift?</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Prompt Suggestions -->
+        <div class="quick-chips-wrapper">
+          <span class="chips-title">SUGGESTED OPERATIONAL INQUIRIES:</span>
+          <div class="quick-chips">
+            <button class="prompt-chip" type="button" data-prompt="What is our current diesel runway and fuel burn rate?">
+              ⛽ Fuel Runway &amp; Days
+            </button>
+            <button class="prompt-chip" type="button" data-prompt="Explain the AI load forecast for the next 6 hours.">
+              📈 6h Load Forecast
+            </button>
+            <button class="prompt-chip" type="button" data-prompt="Why is the diesel generator currently off?">
+              💡 Why is Diesel Off?
+            </button>
+            <button class="prompt-chip" type="button" data-prompt="What happens if a severe blizzard hits right now?">
+              🌪️ Blizzard Simulation
+            </button>
+          </div>
+        </div>
+
+        <!-- Input Box -->
+        <form class="copilot-form" id="copilotForm">
+          <input type="text" id="copilotInput" placeholder="Inquire station status, dispatch, or forecasts…" autocomplete="off" />
+          <button type="submit" id="copilotSendBtn" aria-label="Send Query">
+            <span>➤</span>
+          </button>
+        </form>
+
+        <div class="copilot-footer">
+          <span>Advisory model · MoES Smart India Hackathon 2026</span>
+        </div>
+
+      </div>
     </aside>
   </main>
 
-  <footer class="footer" id="reports"><span>Polar Energy Command · Internal operations prototype</span><span>Data sources: NCPOR, IMD, NOAA, BharatBench (cited, simulated) <b><span class="status-dot"></span> All systems nominal</b></span></footer>
-  <script>window.ENERGY_API_BASE = "https://zyphers.onrender.com";</script>
+  <!-- Ground Footer -->
+  <footer class="command-footer">
+    <div class="footer-left">
+      <span>Zyphers Polar Microgrid EMS · National Centre for Polar and Ocean Research (NCPOR)</span>
+      <span class="sep">|</span>
+      <span>Vasco da Gama, Goa 403804, India</span>
+    </div>
+    <div class="footer-right">
+      <span>Physics-informed model grounded in IMD, NOAA &amp; BharatBench data</span>
+      <span class="system-status-chip"><span class="status-dot pulse-green"></span> ALL SYSTEMS NOMINAL</span>
+    </div>
+  </footer>
+
   <script src="script.js"></script>
 </body>
 </html>
