@@ -119,16 +119,30 @@ navTabs.forEach((tab) => {
 // 3. Theme Toggle (Polar Night / Polar Day)
 // --------------------------------------------------------------------------
 const themeToggleBtn = byId("themeToggle");
-const themeIcon = byId("themeIcon");
-const themeLabel = byId("themeLabel");
-const htmlRoot = document.documentElement;
+const themeIcon      = byId("themeIcon");
+const themeLabel     = byId("themeLabel");
+const htmlRoot       = document.documentElement;
+
+// Restore saved theme (default: light)
+(function initDashboardTheme() {
+  const saved = localStorage.getItem("zyphers_dash_theme") || "light";
+  htmlRoot.setAttribute("data-theme", saved);
+  if (saved === "dark") {
+    themeIcon.textContent  = "☀️";
+    themeLabel.textContent = "Polar Day";
+  } else {
+    themeIcon.textContent  = "🌙";
+    themeLabel.textContent = "Polar Night";
+  }
+})();
 
 themeToggleBtn.addEventListener("click", () => {
-  const currentTheme = htmlRoot.getAttribute("data-theme") || "dark";
-  const newTheme = currentTheme === "dark" ? "light" : "dark";
+  const currentTheme = htmlRoot.getAttribute("data-theme") || "light";
+  const newTheme     = currentTheme === "dark" ? "light" : "dark";
   htmlRoot.setAttribute("data-theme", newTheme);
+  localStorage.setItem("zyphers_dash_theme", newTheme);
 
-  themeIcon.textContent = newTheme === "dark" ? "☀️" : "🌙";
+  themeIcon.textContent  = newTheme === "dark" ? "☀️" : "🌙";
   themeLabel.textContent = newTheme === "dark" ? "Polar Day" : "Polar Night";
 
   updateChartTheme(newTheme);

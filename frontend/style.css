@@ -125,13 +125,18 @@ body {
 
 /* Operational Utility Bar */
 .utility-bar {
-  background: rgba(4, 8, 16, 0.95);
-  border-bottom: 1px solid var(--border-subtle);
+  background: rgba(241, 245, 249, 0.97);
+  border-bottom: 1px solid var(--border-color);
   padding: 6px 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   font-size: 11px;
+  color: var(--text-secondary);
+  transition: background 0.3s, color 0.3s;
+}
+[data-theme="dark"] .utility-bar {
+  background: rgba(4, 8, 16, 0.95);
   color: var(--text-muted);
 }
 .utility-left, .utility-right {
@@ -191,8 +196,8 @@ body {
   box-shadow: 0 0 8px var(--emerald);
 }
 .util-btn {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--border-subtle);
+  background: rgba(15, 23, 42, 0.05);
+  border: 1px solid var(--border-color);
   color: var(--text-secondary);
   padding: 3px 8px;
   border-radius: var(--radius-sm);
@@ -204,17 +209,28 @@ body {
   transition: all 0.2s ease;
 }
 .util-btn:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(15, 23, 42, 0.12);
   color: var(--text-primary);
 }
+[data-theme="dark"] .util-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--border-subtle);
+}
+[data-theme="dark"] .util-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
 .security-chip {
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(15, 23, 42, 0.05);
   color: var(--text-muted);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-color);
   padding: 2px 6px;
   border-radius: 4px;
   font-size: 9px;
   letter-spacing: 0.5px;
+}
+[data-theme="dark"] .security-chip {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--border-subtle);
 }
 
 /* Pulsing Status Dots */

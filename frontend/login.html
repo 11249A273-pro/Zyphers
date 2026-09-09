@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#060c18" />
+  <meta name="theme-color" content="#f0f4f8" />
   <meta name="description" content="NCPOR Zyphers Polar EMS — Secure Operator Login" />
   <title>Zyphers · Secure Access | NCPOR Government of India</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -13,7 +13,32 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+    /* ── Light Mode (Default) ────────────────────────────────── */
     :root {
+      --bg-void:        #f0f4f8;
+      --bg-surface:     #e8eef5;
+      --bg-card:        rgba(255, 255, 255, 0.95);
+      --border-subtle:  rgba(14, 165, 233, 0.18);
+      --border-glow:    rgba(14, 165, 233, 0.45);
+      --accent-sky:     #0284c7;
+      --accent-cyan:    #0891b2;
+      --accent-aurora:  #059669;
+      --accent-amber:   #d97706;
+      --accent-rose:    #e11d48;
+      --text-primary:   #0f172a;
+      --text-secondary: #334155;
+      --text-muted:     #64748b;
+      --font-sans:      'IBM Plex Sans', 'Space Grotesk', sans-serif;
+      --font-mono:      'JetBrains Mono', monospace;
+      --radius-lg:      16px;
+      --radius-md:      10px;
+      --radius-sm:      6px;
+      --shadow-card:    0 4px 32px rgba(14, 165, 233, 0.10), 0 12px 40px rgba(15,23,42,0.12);
+      --shadow-glow:    0 0 24px rgba(14, 165, 233, 0.18);
+    }
+
+    /* ── Dark Mode ───────────────────────────────────────────── */
+    [data-theme="dark"] {
       --bg-void:        #060c18;
       --bg-surface:     #0d1626;
       --bg-card:        rgba(13, 22, 38, 0.85);
@@ -27,11 +52,6 @@
       --text-primary:   #f8fafc;
       --text-secondary: #94a3b8;
       --text-muted:     #475569;
-      --font-sans:      'IBM Plex Sans', 'Space Grotesk', sans-serif;
-      --font-mono:      'JetBrains Mono', monospace;
-      --radius-lg:      16px;
-      --radius-md:      10px;
-      --radius-sm:      6px;
       --shadow-card:    0 0 60px rgba(56, 189, 248, 0.06), 0 24px 48px rgba(0,0,0,0.6);
       --shadow-glow:    0 0 24px rgba(56, 189, 248, 0.25), 0 0 80px rgba(56, 189, 248, 0.08);
     }
@@ -42,6 +62,34 @@
       background: var(--bg-void);
       color: var(--text-primary);
       overflow: hidden;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    /* ── Theme Toggle Button ─────────────────────────────────── */
+    .theme-toggle-btn {
+      position: fixed;
+      top: 14px;
+      right: 18px;
+      z-index: 200;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      box-shadow: var(--shadow-card);
+      letter-spacing: 0.06em;
+    }
+    .theme-toggle-btn:hover {
+      border-color: var(--accent-sky);
+      color: var(--accent-sky);
+      transform: translateY(-1px);
     }
 
     /* ── Aurora Background ─────────────────────────────────── */
@@ -60,11 +108,17 @@
       width: 80%;
       height: 80%;
       background: radial-gradient(ellipse at center,
-        rgba(16, 185, 129, 0.12) 0%,
-        rgba(6, 182, 212, 0.08) 40%,
+        rgba(14, 165, 233, 0.08) 0%,
+        rgba(6, 182, 212, 0.05) 40%,
         transparent 70%);
       animation: aurora-drift-1 18s ease-in-out infinite alternate;
       border-radius: 50%;
+    }
+    [data-theme="dark"] .aurora-bg::before {
+      background: radial-gradient(ellipse at center,
+        rgba(16, 185, 129, 0.12) 0%,
+        rgba(6, 182, 212, 0.08) 40%,
+        transparent 70%);
     }
 
     .aurora-bg::after {
@@ -117,10 +171,11 @@
         transparent 100%);
     }
 
-    /* Star field */
+    /* Star field - hidden in light mode, visible in dark */
     .stars {
       position: absolute;
       inset: 0;
+      opacity: 0;
       background-image:
         radial-gradient(1px 1px at 15% 20%, rgba(248,250,252,0.6) 0%, transparent 100%),
         radial-gradient(1px 1px at 45% 8%, rgba(248,250,252,0.4) 0%, transparent 100%),
@@ -132,6 +187,10 @@
         radial-gradient(1px 1px at 10% 85%, rgba(56,189,248,0.4) 0%, transparent 100%),
         radial-gradient(1px 1px at 38% 92%, rgba(248,250,252,0.3) 0%, transparent 100%);
       animation: star-twinkle 4s ease-in-out infinite alternate;
+      transition: opacity 0.4s;
+    }
+    [data-theme="dark"] .stars {
+      opacity: 1;
     }
 
     @keyframes aurora-drift-1 {
@@ -170,10 +229,15 @@
       inset: 0;
       z-index: 1;
       background-image:
-        linear-gradient(rgba(56,189,248,0.025) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(56,189,248,0.025) 1px, transparent 1px);
+        linear-gradient(rgba(14,165,233,0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(14,165,233,0.06) 1px, transparent 1px);
       background-size: 48px 48px;
       pointer-events: none;
+    }
+    [data-theme="dark"] .grid-overlay {
+      background-image:
+        linear-gradient(rgba(56,189,248,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(56,189,248,0.025) 1px, transparent 1px);
     }
 
     /* ── Centered Layout ────────────────────────────────────── */
@@ -355,7 +419,7 @@
 
     .form-input {
       width: 100%;
-      background: rgba(6, 12, 24, 0.6);
+      background: rgba(241, 245, 249, 0.9);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-sm);
       color: var(--text-primary);
@@ -365,6 +429,9 @@
       outline: none;
       transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
       letter-spacing: 0.03em;
+    }
+    [data-theme="dark"] .form-input {
+      background: rgba(6, 12, 24, 0.6);
     }
 
     .form-input::placeholder {
@@ -575,14 +642,9 @@
       color: var(--text-muted);
     }
 
-    /* ── Bottom watermark ─────────────────────────────────────── */
+    /* ── Bottom watermark (hidden) ─────────────────────────────── */
     .watermark {
-      font-family: var(--font-mono);
-      font-size: 0.60rem;
-      color: var(--text-muted);
-      letter-spacing: 0.12em;
-      text-align: center;
-      opacity: 0.6;
+      display: none;
     }
 
     /* ── Corner coordinates ───────────────────────────────────── */
@@ -633,6 +695,12 @@
   </style>
 </head>
 <body>
+
+  <!-- Theme Toggle Button -->
+  <button class="theme-toggle-btn" id="loginThemeToggle" type="button" title="Toggle Light / Dark mode">
+    <span id="loginThemeIcon">🌙</span>
+    <span id="loginThemeLabel">Dark Mode</span>
+  </button>
 
   <!-- Redirect overlay shown while navigating to dashboard -->
   <div class="redirect-overlay" id="redirectOverlay">
@@ -773,11 +841,7 @@
       </div>
     </div>
 
-    <div class="watermark">
-      DEFAULT CREDENTIALS &nbsp;·&nbsp; username: <strong style="color:#38bdf8">admin</strong>
-      &nbsp;·&nbsp; password: <strong style="color:#38bdf8">zyphers2026</strong>
-      &nbsp;·&nbsp; Change after first login
-    </div>
+    <!-- watermark hidden for security -->
   </main>
 
   <!-- Bottom coordinates watermark -->
@@ -797,6 +861,26 @@
 
     const TOKEN_KEY = "zyphers_token";
     const USER_KEY  = "zyphers_user";
+
+    // ─── Theme toggle (login page) ───────────────────────────────────────
+    (function initLoginTheme() {
+      // Restore saved preference, default to light
+      const saved = localStorage.getItem('zyphers_login_theme') || 'light';
+      if (saved === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        document.getElementById('loginThemeIcon').textContent  = '☀️';
+        document.getElementById('loginThemeLabel').textContent = 'Light Mode';
+      }
+    })();
+
+    document.getElementById('loginThemeToggle').addEventListener('click', () => {
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      const next   = isDark ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('zyphers_login_theme', next);
+      document.getElementById('loginThemeIcon').textContent  = isDark ? '🌙' : '☀️';
+      document.getElementById('loginThemeLabel').textContent = isDark ? 'Dark Mode' : 'Light Mode';
+    });
 
     // ─── If already logged in, skip to dashboard ────────────────────────
     (function checkExistingToken() {
