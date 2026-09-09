@@ -1424,7 +1424,12 @@ body {
   font-weight: 600;
 }
 
-/* Responsive Adaptations */
+/* ==========================================================================
+   RESPONSIVE ADAPTATIONS — TABLET & MOBILE
+   Breakpoints: 1280 | 980 | 768 | 480 | 360
+   ========================================================================== */
+
+/* ── Tablet (≤1280px) ─────────────────────────────────────────────────── */
 @media (max-width: 1280px) {
   .telemetry-hud {
     grid-template-columns: repeat(3, 1fr);
@@ -1435,11 +1440,16 @@ body {
   .simulation-controller {
     grid-column: span 2;
   }
+  .dashboard-shell {
+    grid-template-columns: 1fr 320px;
+  }
 }
 
+/* ── Small Tablet (≤980px) ────────────────────────────────────────────── */
 @media (max-width: 980px) {
   .dashboard-shell {
     grid-template-columns: 1fr;
+    padding: 16px 16px;
   }
   .copilot-panel {
     height: 500px;
@@ -1449,26 +1459,444 @@ body {
     grid-template-columns: 1fr;
   }
   .priority-cards-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .scenarios-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .chart-footer-metrics {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .utility-bar {
+    padding: 5px 14px;
+    font-size: 10px;
+  }
+}
+
+/* ── Large Phone (≤768px) ─────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  /* Utility bar — collapse non-essential items */
+  .utility-bar {
+    padding: 5px 12px;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .utility-left {
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .utility-right {
+    gap: 5px;
+    flex-wrap: wrap;
+  }
+  /* Hide verbose items on small screens */
+  .downlink-status .downlink-text,
+  .security-chip {
+    display: none;
+  }
+  #readAloudBtn span:last-child,
+  #soundToggle {
+    font-size: 0;          /* hide text, keep emoji */
+    padding: 3px 5px;
+  }
+  #themeLabel {
+    display: none;
+  }
+  #readAloudBtn {
+    font-size: 0;
+    padding: 3px 5px;
+  }
+
+  /* Masthead */
+  .command-masthead {
+    grid-template-columns: 1fr;
+    padding: 12px 14px;
+    gap: 12px;
+  }
+  .simulation-controller {
+    grid-column: span 1;
+  }
+  .masthead-left {
+    gap: 10px;
+  }
+  .emblem-container {
+    width: 44px;
+    height: 44px;
+  }
+  .project-title {
+    font-size: 18px;
+  }
+  .ministry-title {
+    font-size: 10px;
+  }
+  .system-subtitle {
+    font-size: 10px;
+  }
+
+  /* Nav tabs — scrollable, smaller padding */
+  .command-nav {
+    padding: 0 8px;
+    gap: 2px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .command-nav::-webkit-scrollbar {
+    display: none;
+  }
+  .nav-tab {
+    padding: 10px 10px;
+    font-size: 11.5px;
+    gap: 5px;
+    white-space: nowrap;
+  }
+
+  /* Telemetry HUD */
+  .telemetry-hud {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .hud-val {
+    font-size: 20px;
+  }
+
+  /* Env ribbon */
+  .env-ribbon {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px 12px;
+  }
+  .env-pill {
+    gap: 6px;
+    min-width: calc(50% - 6px);
+  }
+
+  /* Charts */
+  .chart-hero-panel .chart-viewport {
+    height: 200px;
+    min-height: 200px;
+  }
+  .chart-viewport {
+    min-height: 200px;
+    height: 200px;
+  }
+  .chart-viewport-compact {
+    height: 160px;
+    min-height: 160px;
+  }
+  .chart-footer-metrics {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  .panel-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .chart-legend-chips {
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+
+  /* Grids */
+  .two-panel-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  .priority-cards-grid {
     grid-template-columns: 1fr;
   }
   .scenarios-grid {
     grid-template-columns: 1fr;
   }
+
+  /* Scenario box */
+  .scenario-box {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .sim-btn-trigger {
+    align-self: flex-start;
+    width: 100%;
+    text-align: center;
+  }
+
+  /* Dashboard shell */
+  .dashboard-shell {
+    padding: 12px 12px;
+    gap: 14px;
+  }
+
+  /* Copilot */
+  .copilot-panel {
+    height: 420px;
+  }
+
+  /* Footer */
+  .command-footer {
+    flex-direction: column;
+    text-align: center;
+    padding: 10px 14px;
+    gap: 6px;
+  }
+
+  /* Hardware panel */
+  .hw-test-form {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* Table scroll */
+  .alert-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
-@media (max-width: 640px) {
-  .telemetry-hud {
-    grid-template-columns: 1fr;
+/* ── Small Phone (≤480px) ─────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  /* Body font scale */
+  body {
+    font-size: 13px;
   }
+
+  /* Utility bar — minimal */
+  .utility-bar {
+    padding: 4px 10px;
+    font-size: 9.5px;
+  }
+  .clock-group {
+    gap: 4px;
+  }
+  .clock-badge {
+    font-size: 9px;
+    padding: 1px 4px;
+  }
+  .mono-time {
+    font-size: 11px;
+  }
+  .sep {
+    display: none;
+  }
+  .grid-condition-badge {
+    font-size: 9px;
+    padding: 2px 6px;
+  }
+  #logoutBtn {
+    font-size: 0;
+    padding: 3px 6px;
+  }
+  #logoutBtn::after {
+    content: '⏻';
+    font-size: 12px;
+  }
+  .user-badge-role,
+  .user-badge-name {
+    display: none;
+  }
+
+  /* Masthead */
   .command-masthead {
+    padding: 10px 10px;
+    gap: 10px;
+  }
+  .masthead-left {
+    flex-direction: row;
+    align-items: center;
+  }
+  .emblem-container {
+    width: 36px;
+    height: 36px;
+  }
+  .project-title {
+    font-size: 16px;
+  }
+  .ministry-title {
+    font-size: 9px;
+    letter-spacing: 0.3px;
+  }
+  .sub-ministry {
+    font-size: 9.5px;
+  }
+  .system-subtitle {
+    display: none;  /* too long for small screens */
+  }
+  .badge-tag {
+    display: none;
+  }
+  .sim-ctrl-btn {
+    font-size: 10px;
+    padding: 3px 5px;
+  }
+
+  /* Nav tabs — icon only */
+  .nav-tab {
+    padding: 9px 8px;
+    font-size: 0;     /* hide label text */
+    gap: 0;
+  }
+  .nav-tab .nav-icon {
+    font-size: 16px;
+  }
+  .alert-count-pip {
+    font-size: 8px;
+    padding: 1px 3px;
+  }
+
+  /* Telemetry HUD */
+  .telemetry-hud {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  .hud-card {
+    padding: 10px 10px;
+  }
+  .hud-val {
+    font-size: 18px;
+  }
+  .hud-label {
+    font-size: 9px;
+  }
+  .hud-subtext {
+    font-size: 9.5px;
+  }
+
+  /* Env ribbon */
+  .env-ribbon {
+    padding: 8px 10px;
+    gap: 8px;
+  }
+  .env-pill {
+    min-width: calc(50% - 4px);
+    gap: 5px;
+  }
+  .env-icon {
+    font-size: 14px;
+  }
+  .env-kicker {
+    font-size: 8.5px;
+  }
+  .env-pill strong {
+    font-size: 11px;
+  }
+
+  /* Charts */
+  .chart-hero-panel .chart-viewport,
+  .chart-viewport {
+    height: 160px;
+    min-height: 160px;
+  }
+  .chart-viewport-compact {
+    height: 130px;
+    min-height: 130px;
+  }
+  .chart-footer-metrics {
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    padding-top: 8px;
+  }
+  .footer-stat strong {
+    font-size: 11px;
+  }
+  .stat-label {
+    font-size: 8.5px;
+  }
+
+  /* Panel cards */
+  .panel-card {
+    padding: 14px 12px;
+    gap: 10px;
+  }
+  .panel-title {
+    font-size: 14px;
+  }
+
+  /* Merit order */
+  .merit-order-list {
+    gap: 4px;
+  }
+  .merit-item {
+    padding: 5px 8px;
+    gap: 6px;
+  }
+  .merit-info strong {
+    font-size: 11px;
+  }
+  .merit-info small {
+    display: none;
+  }
+
+  /* Directive */
+  .directive-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .action-btn-glow {
+    width: 100%;
+    text-align: center;
+  }
+
+  /* Dashboard shell */
+  .dashboard-shell {
+    padding: 10px 10px;
+    gap: 12px;
+  }
+
+  /* Copilot */
+  .copilot-panel {
+    height: 380px;
+    padding: 14px;
+  }
+  .copilot-name {
+    font-size: 13px;
+  }
+
+  /* Hardware */
+  .hw-test-form {
     grid-template-columns: 1fr;
   }
-  .masthead-station-card, .simulation-controller {
-    grid-column: span 1;
-  }
-  .env-ribbon {
+  .hw-status-row {
     flex-wrap: wrap;
-    gap: 12px;
+    gap: 8px;
+  }
+
+  /* Synoptic SVG */
+  .synoptic-container {
+    padding: 6px;
+  }
+
+  /* Command footer */
+  .command-footer {
+    font-size: 10px;
+    padding: 8px 10px;
+  }
+}
+
+/* ── Extra Small Phone (≤360px) ───────────────────────────────────────── */
+@media (max-width: 360px) {
+  .telemetry-hud {
+    grid-template-columns: 1fr;   /* single column on very small */
+  }
+  .hud-val {
+    font-size: 22px;
+  }
+  .env-pill {
+    min-width: 100%;
+  }
+  .chart-viewport,
+  .chart-hero-panel .chart-viewport {
+    height: 140px;
+    min-height: 140px;
+  }
+  .chart-viewport-compact {
+    height: 110px;
+    min-height: 110px;
+  }
+  .project-title {
+    font-size: 14px;
+  }
+  .dashboard-shell {
+    padding: 8px 8px;
   }
 }
 /* =====================================================================
