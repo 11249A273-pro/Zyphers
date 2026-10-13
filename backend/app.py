@@ -66,13 +66,13 @@ def seed_admin():
             admin = User(
                 username="admin",
                 email="admin@zyphers.ncpor.gov.in",
-                hashed_password=hash_password("zyphers2026"),
+                hashed_password=hash_password("zyphers0116"),
                 role="admin",
                 is_active=True
             )
             db.add(admin)
             db.commit()
-            print("[AUTH] Default admin user seeded: admin / zyphers2026")
+            print("[AUTH] Default admin user seeded: admin / zyphers0116")
         db.close()
     except Exception as e:
         print(f"[AUTH] Seed failed: {e}")
